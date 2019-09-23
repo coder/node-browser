@@ -162,6 +162,9 @@ export class Client {
       return Promise.reject(new Error(`Unable to call "${method}" on proxy ${proxyId}: disconnected`))
     }
 
+    // We won't have garbage collection on callbacks so they should only be used
+    // if they are long-lived or on proxies that dispose around the same time
+    // the callback becomes invalid.
     const storeCallback = (cb: (...args: any[]) => void): number => {
       const callbackId = this.callbackId++
       logger.trace(() => ["storing callback", field("proxyId", proxyId), field("callbackId", callbackId)])
@@ -407,7 +410,7 @@ export class Client {
           dispose()
         }
       } else {
-        // The callbacks will still be unusable though.
+        // The callbacks will still be unusable though so clear them.
         this.getProxy(proxyId).callbacks.clear()
         log()
       }

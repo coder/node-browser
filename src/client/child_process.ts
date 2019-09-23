@@ -135,7 +135,25 @@ export class ChildProcessModule {
       options = undefined
     }
 
-    return new ChildProcess(this.proxy.exec(command, options, callback))
+    const proc = new ChildProcess(this.proxy.exec(command, options))
+    // If we pass the callback it'll stick around forever so we'll handle it
+    // client-side instead.
+    if (callback) {
+      const cb = callback
+      const encoding = options && options.encoding
+      const stdout: any[] = [];
+      const stderr: any[] = [];
+      proc.stdout.on("data", (d) => stdout.push(d))
+      proc.stderr.on("data", (d) => stderr.push(d))
+      proc.once("exit", (code, signal) => {
+        cb(
+          code !== 0 || signal !== null ? new Error(`Command failed: ${command}`) : null,
+          encoding === "utf8" ? stdout.join("") : Buffer.concat(stdout),
+          encoding === "utf8" ? stderr.join("") : Buffer.concat(stderr)
+        )
+      })
+    }
+    return proc
   }
 
   public fork = (modulePath: string, args?: string[] | cp.ForkOptions, options?: cp.ForkOptions): cp.ChildProcess => {

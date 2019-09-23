@@ -63,12 +63,8 @@ export interface ChildProcessProxies {
 export class ChildProcessModuleProxy {
   public constructor(private readonly forkProvider?: ForkProvider) {}
 
-  public async exec(
-    command: string,
-    options?: { encoding?: string | null } & cp.ExecOptions | null,
-    callback?: (error: cp.ExecException | null, stdin: string | Buffer, stdout: string | Buffer) => void
-  ): Promise<ChildProcessProxies> {
-    return this.returnProxies(cp.exec(command, options && withEnv(options), callback))
+  public async exec(command: string, options?: { encoding?: string | null } & cp.ExecOptions | null): Promise<ChildProcessProxies> {
+    return this.returnProxies(cp.exec(command, options && withEnv(options)))
   }
 
   public async fork(modulePath: string, args?: string[], options?: cp.ForkOptions): Promise<ChildProcessProxies> {

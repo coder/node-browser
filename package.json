@@ -1,0 +1,32 @@
+{
+  "name": "@coder/node-browser",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "Coder",
+  "description": "Use Node APIs in the browser.",
+  "scripts": {
+    "test": "mocha -r ts-node/register -r amd-loader ./test/*.test.ts",
+    "lint": "eslint {src,test}/**/*.ts",
+    "prepare": "tsc"
+  },
+  "devDependencies": {
+    "@types/mocha": "2.2.39",
+    "@types/node": "^12.7.5",
+    "@types/rimraf": "^2.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.0.0",
+    "@typescript-eslint/parser": "^2.0.0",
+    "amd-loader": "^0.0.8",
+    "eslint": "^6.2.0",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-prettier": "^3.1.0",
+    "mocha": "^6.2.0",
+    "prettier": "^1.18.2",
+    "rimraf": "^3.0.0",
+    "ts-node": "^8.3.0",
+    "typescript": "~3.5.0"
+  },
+  "dependencies": {
+    "@coder/logger": "^1.1.11"
+  }
+}

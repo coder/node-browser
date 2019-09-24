@@ -60,11 +60,11 @@ describe("fs", () => {
   describe("chown", () => {
     it("should chown existing file", async () => {
       const file = await helper.createTmpFile()
-      assert.equal(await util.promisify(nativeFs.chown)(file, 1000, 1000), undefined)
+      assert.equal(await util.promisify(nativeFs.chown)(file, os.userInfo().uid, os.userInfo().gid), undefined)
     })
 
     it("should fail to chown nonexistent file", async () => {
-      await assert.rejects(util.promisify(fs.chown)(helper.tmpFile(), 1000, 1000), /ENOENT/)
+      await assert.rejects(util.promisify(fs.chown)(helper.tmpFile(), os.userInfo().uid, os.userInfo().gid), /ENOENT/)
     })
   })
 
@@ -180,12 +180,12 @@ describe("fs", () => {
     it("should fchown existing file", async () => {
       const file = await helper.createTmpFile()
       const fd = await util.promisify(nativeFs.open)(file, "r")
-      assert.equal(await util.promisify(fs.fchown)(fd, 1000, 1000), undefined)
+      assert.equal(await util.promisify(fs.fchown)(fd, os.userInfo().uid, os.userInfo().gid), undefined)
       await util.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fchown nonexistent file", async () => {
-      await assert.rejects(util.promisify(fs.fchown)(99999, 1000, 1000), /EBADF/)
+      await assert.rejects(util.promisify(fs.fchown)(99999, os.userInfo().uid, os.userInfo().gid), /EBADF/)
     })
   })
 
@@ -245,7 +245,7 @@ describe("fs", () => {
     it("should futimes existing file", async () => {
       const file = await helper.createTmpFile()
       const fd = await util.promisify(nativeFs.open)(file, "w")
-      assert.equal(await util.promisify(fs.futimes)(fd, 1000, 1000), undefined)
+      assert.equal(await util.promisify(fs.futimes)(fd, os.userInfo().uid, os.userInfo().gid), undefined)
       await util.promisify(nativeFs.close)(fd)
     })
 
@@ -277,11 +277,11 @@ describe("fs", () => {
   describe("lchown", () => {
     it("should lchown existing file", async () => {
       const file = await helper.createTmpFile()
-      assert.equal(await util.promisify(fs.lchown)(file, 1000, 1000), undefined)
+      assert.equal(await util.promisify(fs.lchown)(file, os.userInfo().uid, os.userInfo().gid), undefined)
     })
 
     it("should fail to lchown nonexistent file", async () => {
-      await assert.rejects(util.promisify(fs.lchown)(helper.tmpFile(), 1000, 1000), /ENOENT/)
+      await assert.rejects(util.promisify(fs.lchown)(helper.tmpFile(), os.userInfo().uid, os.userInfo().gid), /ENOENT/)
     })
   })
 

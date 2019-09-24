@@ -3,7 +3,7 @@ import { EventEmitter } from "events"
 import * as fs from "fs"
 import * as util from "util"
 import { encode, decode } from "../src/common/arguments"
-import { ServerProxy } from "../src/common/proxy";
+import { ServerProxy } from "../src/common/proxy"
 
 class TestProxy extends ServerProxy {
   public constructor(public readonly id: string) {
@@ -69,10 +69,13 @@ describe("Convert", () => {
     const called: any[] = []
     const map = new Map<number, (...args: any[]) => void>()
     let i = 0
-    const encoded = encode((...v: any[]) => called.push(...v), (f) => {
-      map.set(i++, f)
-      return i - 1
-    })
+    const encoded = encode(
+      (...v: any[]) => called.push(...v),
+      (f) => {
+        map.set(i++, f)
+        return i - 1
+      }
+    )
 
     const remoteFn = decode(encoded, (id, args) => {
       map.get(id)!(...args)

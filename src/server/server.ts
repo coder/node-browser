@@ -71,11 +71,9 @@ export class Server {
         break
       case Message.Client.Type.Ping:
         logger.trace("ping")
-        this.connection.send(
-          JSON.stringify(<Message.Server.Pong>{
-            type: Message.Server.Type.Pong,
-          })
-        )
+        this.send(<Message.Server.Pong>{
+          type: Message.Server.Type.Pong,
+        })
         break
       default:
         throw new Error("unknown message type")
@@ -90,11 +88,7 @@ export class Server {
     const proxyId = message.proxyId
     const method = message.method
     const args = message.args.map((a) => {
-      return decode(
-        a,
-        (id, args) => this.sendCallback(proxyId, id, args),
-        (id) => this.getProxy(id).instance
-      )
+      return decode(a, (id, args) => this.sendCallback(proxyId, id, args), (id) => this.getProxy(id).instance)
     })
 
     logger.trace(
@@ -102,7 +96,7 @@ export class Server {
       field("messageId", messageId),
       field("proxyId", proxyId),
       field("method", method),
-      field("args", args),
+      field("args", args)
     )
 
     let response: any
@@ -141,14 +135,12 @@ export class Server {
    */
   private sendCallback(proxyId: number | Module, callbackId: number, args: any[]): void {
     logger.trace(() => ["sending callback", field("proxyId", proxyId), field("callbackId", callbackId)])
-    this.connection.send(
-      JSON.stringify(<Message.Server.Callback>{
-        type: Message.Server.Type.Callback,
-        callbackId,
-        proxyId,
-        args: args.map((a) => this.encode(a)),
-      })
-    )
+    this.send(<Message.Server.Callback>{
+      type: Message.Server.Type.Callback,
+      callbackId,
+      proxyId,
+      args: args.map((a) => this.encode(a)),
+    })
   }
 
   /**
@@ -206,16 +198,14 @@ export class Server {
       "sending event",
       field("proxyId", proxyId),
       field("event", event),
-      field("args", args.map((a) => a instanceof Buffer ? a.toString() : a))
+      field("args", args.map((a) => (a instanceof Buffer ? a.toString() : a))),
     ])
-    this.connection.send(
-      JSON.stringify(<Message.Server.Event>{
-        type: Message.Server.Type.Event,
-        event,
-        proxyId,
-        args: args.map((a) => this.encode(a)),
-      })
-    )
+    this.send(<Message.Server.Event>{
+      type: Message.Server.Type.Event,
+      event,
+      proxyId,
+      args: args.map((a) => this.encode(a)),
+    })
   }
 
   /**
@@ -223,36 +213,24 @@ export class Server {
    */
   private sendResponse(messageId: number, response: any): void {
     const encoded = this.encode(response)
-    logger.trace(
-      "sending resolve",
-      field("messageId", messageId),
-      field("response", encoded)
-    )
-    this.connection.send(
-      JSON.stringify(<Message.Server.Success>{
-        type: Message.Server.Type.Success,
-        messageId,
-        response: encoded,
-      })
-    )
+    logger.trace("sending resolve", field("messageId", messageId), field("response", encoded))
+    this.send(<Message.Server.Success>{
+      type: Message.Server.Type.Success,
+      messageId,
+      response: encoded,
+    })
   }
 
   /**
    * Send an exception back to the client.
    */
   private sendException(messageId: number, error: Error): void {
-    logger.trace(
-      "sending reject",
-      field("messageId", messageId),
-      field("message", error.message),
-    )
-    this.connection.send(
-      JSON.stringify(<Message.Server.Fail>{
-        type: Message.Server.Type.Fail,
-        messageId,
-        response: this.encode(error),
-      })
-    )
+    logger.trace("sending reject", field("messageId", messageId), field("message", error.message))
+    this.send(<Message.Server.Fail>{
+      type: Message.Server.Type.Fail,
+      messageId,
+      response: this.encode(error),
+    })
   }
 
   /**
@@ -279,5 +257,11 @@ export class Server {
       throw new Error(`proxy ${proxyId} disposed too early`)
     }
     return this.proxies.get(proxyId)!
+  }
+
+  private send(message: Message.Server.Message): void {
+    if (!this.disconnected) {
+      this.connection.send(JSON.stringify(message))
+    }
   }
 }

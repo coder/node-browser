@@ -188,7 +188,7 @@ export class Client {
       field("messageId", messageId),
       field("proxyId", proxyId),
       field("method", method),
-      field("args", args),
+      field("args", args)
     )
 
     this.connection.send(JSON.stringify(message))
@@ -250,11 +250,7 @@ export class Client {
    * Convert success message to a success event.
    */
   private emitSuccess(message: Message.Server.Success): void {
-    logger.trace(
-      "received resolve",
-      field("messageId", message.messageId),
-      field("response", message.response),
-    )
+    logger.trace("received resolve", field("messageId", message.messageId), field("response", message.response))
     this.successEmitter.emit(message.messageId, message)
   }
 
@@ -262,11 +258,7 @@ export class Client {
    * Convert fail message to a fail event.
    */
   private emitFail(message: Message.Server.Fail): void {
-    logger.trace(
-      "received reject",
-      field("messageId", message.messageId),
-      field("message", message.response),
-    )
+    logger.trace("received reject", field("messageId", message.messageId), field("message", message.response))
     this.failEmitter.emit(message.messageId, message)
   }
 
@@ -284,11 +276,11 @@ export class Client {
       "received event",
       field("proxyId", message.proxyId),
       field("event", message.event),
-      field("args", args.map((a) => a instanceof Buffer ? a.toString() : a))
+      field("args", args.map((a) => (a instanceof Buffer ? a.toString() : a))),
     ])
     this.eventEmitter.emit(message.proxyId, {
       event: message.event,
-      args
+      args,
     })
   }
 

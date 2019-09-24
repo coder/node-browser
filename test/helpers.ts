@@ -56,14 +56,17 @@ export const createClient = (serverOptions?: ServerOptions): Client => {
   const c2s = new Emitter<string>()
   const closeCallbacks = <Array<() => void>>[]
 
-  new Server({
-    close: (): void => closeCallbacks.forEach((cb) => cb()),
-    onDown: (_cb: () => void): void => undefined,
-    onUp: (_cb: () => void): void => undefined,
-    onClose: (cb: () => void): number => closeCallbacks.push(cb),
-    onMessage: (cb): Disposable => c2s.event((d) => cb(d)),
-    send: (data): NodeJS.Timer => setTimeout(() => s2c.emit(data), 0),
-  }, serverOptions)
+  new Server(
+    {
+      close: (): void => closeCallbacks.forEach((cb) => cb()),
+      onDown: (_cb: () => void): void => undefined,
+      onUp: (_cb: () => void): void => undefined,
+      onClose: (cb: () => void): number => closeCallbacks.push(cb),
+      onMessage: (cb): Disposable => c2s.event((d) => cb(d)),
+      send: (data): NodeJS.Timer => setTimeout(() => s2c.emit(data), 0),
+    },
+    serverOptions
+  )
 
   const client = new Client({
     close: (): void => closeCallbacks.forEach((cb) => cb()),

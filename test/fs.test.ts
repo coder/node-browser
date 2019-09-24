@@ -1,3 +1,4 @@
+import "leaked-handles"
 import * as assert from "assert"
 import * as nativeFs from "fs"
 import * as os from "os"
@@ -322,7 +323,10 @@ describe("fs", () => {
 
   describe("mkdtemp", () => {
     it("should create temp dir", async () => {
-      assert.equal(/^\/tmp\/coder\/fs\/[a-zA-Z0-9]{6}/.test(await util.promisify(fs.mkdtemp)(helper.coderDir + "/")), true)
+      assert.equal(
+        /^\/tmp\/coder\/fs\/[a-zA-Z0-9]{6}/.test(await util.promisify(fs.mkdtemp)(helper.coderDir + "/")),
+        true
+      )
     })
   })
 

@@ -1,4 +1,5 @@
-import * as assert from "assert";
+import "leaked-handles"
+import * as assert from "assert"
 import { ChildProcess } from "child_process"
 import * as path from "path"
 import { Readable } from "stream"
@@ -8,7 +9,7 @@ import { createClient } from "./helpers"
 
 describe("child_process", () => {
   const client = createClient()
-  const cp = client.modules[Module.ChildProcess] as any as typeof import("child_process")
+  const cp = (client.modules[Module.ChildProcess] as any) as typeof import("child_process")
 
   const getStdout = async (proc: ChildProcess): Promise<string> => {
     return new Promise<Buffer>((r): Readable => proc.stdout!.once("data", r)).then((s) => s.toString())
@@ -27,7 +28,9 @@ describe("child_process", () => {
   describe("spawn", () => {
     it("should get spawn stdout", async () => {
       const proc = cp.spawn("echo", ["test"])
-      const result = await Promise.all([getStdout(proc), new Promise((r): ChildProcess => proc.on("exit", r))]).then((values) => values[0])
+      const result = await Promise.all([getStdout(proc), new Promise((r): ChildProcess => proc.on("exit", r))]).then(
+        (values) => values[0]
+      )
       assert.equal(result, "test\n")
     })
 
@@ -87,7 +90,7 @@ describe("child_process", () => {
       const client = createClient()
       const cp = client.modules[Module.ChildProcess]
       const proc = cp.fork(path.join(__dirname, "forker.js"))
-      let called: Error[] = [];
+      const called: Error[] = []
       proc.on("error", (error: Error) => {
         called.push(error)
       })

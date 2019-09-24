@@ -5,7 +5,7 @@ describe("Event", () => {
   const emitter = new Emitter<number>()
 
   it("should listen to global event", () => {
-    const called : any[]= [];
+    const called: any[] = []
     const d = emitter.event((v) => called.push(v))
     emitter.emit(10)
     assert.equal(called.length, 1)
@@ -14,7 +14,7 @@ describe("Event", () => {
   })
 
   it("should listen to id event", () => {
-    const called : any[]= [];
+    const called: any[] = []
     const d = emitter.event(0, (v) => called.push(v))
     emitter.emit(0, 5)
     assert.equal(called.length, 1)
@@ -23,7 +23,7 @@ describe("Event", () => {
   })
 
   it("should listen to string id event", () => {
-    const called : any[]= [];
+    const called: any[] = []
     const d = emitter.event("string", (v) => called.push(v))
     emitter.emit("string", 55)
     assert.equal(called.length, 1)
@@ -32,7 +32,7 @@ describe("Event", () => {
   })
 
   it("should not listen wrong id event", () => {
-    const called : any[]= []
+    const called: any[] = []
     const d = emitter.event(1, (v) => called.push(v))
     emitter.emit(0, 5)
     emitter.emit(1, 6)
@@ -42,7 +42,7 @@ describe("Event", () => {
   })
 
   it("should listen to id event globally", () => {
-    const called : any[]= []
+    const called: any[] = []
     const d = emitter.event((v) => called.push(v))
     emitter.emit(1, 11)
     assert.equal(called.length, 1)
@@ -51,7 +51,7 @@ describe("Event", () => {
   })
 
   it("should listen to global event", () => {
-    const called : any[]= []
+    const called: any[] = []
     const d = emitter.event(3, (v) => called.push(v))
     emitter.emit(14)
     assert.equal(called.length, 1)
@@ -60,7 +60,7 @@ describe("Event", () => {
   })
 
   it("should listen to id event multiple times", () => {
-    const called : any[]= []
+    const called: any[] = []
     const disposers = [
       emitter.event(934, (v) => called.push(v)),
       emitter.event(934, (v) => called.push(v)),
@@ -77,7 +77,7 @@ describe("Event", () => {
   })
 
   it("should dispose individually", () => {
-    const called : any[]= []
+    const called: any[] = []
     const d = emitter.event((v) => called.push(v))
 
     const called2: any[] = []
@@ -101,7 +101,7 @@ describe("Event", () => {
   })
 
   it("should dispose by id", () => {
-    const called : any[]= []
+    const called: any[] = []
     emitter.event((v) => called.push(v))
 
     const called2: any[] = []
@@ -117,7 +117,7 @@ describe("Event", () => {
   })
 
   it("should dispose all", () => {
-    const called : any[]= []
+    const called: any[] = []
     emitter.event((v) => called.push(v))
     emitter.event(1, (v) => called.push(v))
 

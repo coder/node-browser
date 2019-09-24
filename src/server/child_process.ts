@@ -6,12 +6,15 @@ import { WritableProxy, ReadableProxy } from "./stream"
 export type ForkProvider = (modulePath: string, args?: string[], options?: cp.ForkOptions) => cp.ChildProcess
 
 export class ChildProcessProxy extends ServerProxy<cp.ChildProcess> {
+  private exited = false
+
   public constructor(instance: cp.ChildProcess) {
     super({
       bindEvents: ["close", "disconnect", "error", "exit", "message"],
-      doneEvents: ["close"],
+      doneEvents: ["exit", "error"],
       instance,
     })
+    this.onDone(() => (this.exited = true))
   }
 
   public async kill(signal?: string): Promise<void> {
@@ -47,8 +50,16 @@ export class ChildProcessProxy extends ServerProxy<cp.ChildProcess> {
   }
 
   public async dispose(): Promise<void> {
-    this.instance.kill()
-    setTimeout(() => this.instance.kill("SIGKILL"), 5000) // Double tap.
+    if (!this.exited) {
+      await new Promise((resolve) => {
+        this.onDone(() => {
+          clearTimeout(timeout)
+          resolve()
+        })
+        const timeout = setTimeout(() => this.instance.kill("SIGKILL"), 5000)
+        this.instance.kill()
+      })
+    }
     await super.dispose()
   }
 }
@@ -63,7 +74,10 @@ export interface ChildProcessProxies {
 export class ChildProcessModuleProxy {
   public constructor(private readonly forkProvider?: ForkProvider) {}
 
-  public async exec(command: string, options?: { encoding?: string | null } & cp.ExecOptions | null): Promise<ChildProcessProxies> {
+  public async exec(
+    command: string,
+    options?: { encoding?: string | null } & cp.ExecOptions | null
+  ): Promise<ChildProcessProxies> {
     return this.returnProxies(cp.exec(command, options && withEnv(options)))
   }
 

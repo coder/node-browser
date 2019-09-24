@@ -1,3 +1,4 @@
+import "leaked-handles"
 import * as assert from "assert"
 import * as nativeNet from "net"
 import { Module } from "../src/common/proxy"

@@ -141,8 +141,8 @@ export class ChildProcessModule {
     if (callback) {
       const cb = callback
       const encoding = options && options.encoding
-      const stdout: any[] = [];
-      const stderr: any[] = [];
+      const stdout: any[] = []
+      const stderr: any[] = []
       proc.stdout.on("data", (d) => stdout.push(d))
       proc.stderr.on("data", (d) => stderr.push(d))
       proc.once("exit", (code, signal) => {

@@ -3,6 +3,8 @@ import { promisify } from "util"
 import { EncodingOptions, ServerProxy } from "../common/proxy"
 import { ReadableProxy, WritableProxy } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * A serializable version of fs.Stats.
  */

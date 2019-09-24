@@ -1,5 +1,7 @@
 import { Disposable } from "./util"
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 export interface Event<T> {
   (listener: (value: T) => void): Disposable
   (id: number | string, listener: (value: T) => void): Disposable
@@ -13,7 +15,7 @@ export interface Event<T> {
  * no ID.
  */
 export class Emitter<T> {
-  private listeners = <Array<(value: T) => void>>[]
+  private listeners: Array<(value: T) => void> = []
   private readonly idListeners = new Map<number | string, Array<(value: T) => void>>()
 
   public get event(): Event<T> {
@@ -84,7 +86,7 @@ export class Emitter<T> {
   }
 
   public get counts(): { [key: string]: number } {
-    const counts = <{ [key: string]: number }>{}
+    const counts: { [key: string]: number } = {}
     if (this.listeners.length > 0) {
       counts["n/a"] = this.listeners.length
     }

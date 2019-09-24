@@ -2,6 +2,8 @@ import * as net from "net"
 import { ServerProxy } from "../common/proxy"
 import { DuplexProxy } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export class NetSocketProxy extends DuplexProxy<net.Socket> {
   public constructor(socket: net.Socket) {
     super(socket, ["connect", "lookup", "timeout"])

@@ -4,6 +4,8 @@ import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { NetModuleProxy, NetServerProxy, NetSocketProxy } from "../server/net"
 import { Duplex } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface ClientNetSocketProxy extends NetSocketProxy, ClientServerProxy<net.Socket> {}
 
 export class Socket extends Duplex<ClientNetSocketProxy> implements net.Socket {
@@ -232,6 +234,7 @@ export class NetModule implements NodeNet {
   public readonly Server: typeof net.Server
 
   public constructor(private readonly proxy: ClientNetModuleProxy) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore this is because Socket is missing things from the Stream
     // namespace but I'm unsure how best to provide them (finished,
     // finished.__promisify__, pipeline, and some others) or if it even matters.
@@ -296,15 +299,15 @@ export class NetModule implements NodeNet {
     throw new Error("not implemented")
   }
 
-  public isIP = (_input: string): number => {
+  public isIP = (): number => {
     throw new Error("not implemented")
   }
 
-  public isIPv4 = (_input: string): boolean => {
+  public isIPv4 = (): boolean => {
     throw new Error("not implemented")
   }
 
-  public isIPv6 = (_input: string): boolean => {
+  public isIPv6 = (): boolean => {
     throw new Error("not implemented")
   }
 }

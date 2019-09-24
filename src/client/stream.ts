@@ -4,6 +4,8 @@ import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { isPromise } from "../common/util"
 import { DuplexProxy, ReadableProxy, WritableProxy } from "../server/stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface ClientWritableProxy extends WritableProxy, ClientServerProxy<stream.Writable> {}
 
 export class Writable<T extends ClientWritableProxy = ClientWritableProxy> extends ClientProxy<T>

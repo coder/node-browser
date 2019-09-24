@@ -1,5 +1,7 @@
 import { ClientServerProxy, ServerProxy } from "./proxy"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export const isProxy = <P = ClientServerProxy | ServerProxy>(value: any): value is P => {
   return value && typeof value === "object" && typeof value.onEvent === "function"
 }

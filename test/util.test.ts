@@ -4,6 +4,7 @@ import * as fs from "fs"
 import * as util from "util"
 import { encode, decode } from "../src/common/arguments"
 import { ServerProxy } from "../src/common/proxy"
+import { testFn } from "./helpers"
 
 class TestProxy extends ServerProxy {
   public constructor(public readonly id: string) {
@@ -66,25 +67,25 @@ describe("Convert", () => {
   })
 
   it("should convert function", () => {
-    const called: any[] = []
-    const map = new Map<number, (...args: any[]) => void>()
+    const fn = testFn()
+    const map = new Map<number, (...args: Array<string | number>) => void>()
     let i = 0
-    const encoded = encode(
-      (...v: any[]) => called.push(...v),
-      (f) => {
-        map.set(i++, f)
-        return i - 1
-      }
-    )
+    const encoded = encode(fn, (f) => {
+      map.set(i++, f)
+      return i - 1
+    })
 
     const remoteFn = decode(encoded, (id, args) => {
-      map.get(id)!(...args)
+      const f = map.get(id)
+      if (f) {
+        f(...args)
+      }
     })
 
     remoteFn("a", "b", 1)
 
-    assert.equal(called.length, 3)
-    assert.deepEqual(called, ["a", "b", 1])
+    assert.equal(fn.called, 1)
+    assert.deepEqual(fn.args, [["a", "b", 1]])
   })
 
   it("should convert array", () => {

@@ -2,6 +2,9 @@ import { EventEmitter } from "events"
 import * as stream from "stream"
 import { ServerProxy } from "../common/proxy"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 export class WritableProxy<T extends stream.Writable = stream.Writable> extends ServerProxy<T> {
   public constructor(instance: T, bindEvents: string[] = [], delayedEvents?: string[]) {
     super({
@@ -52,13 +55,13 @@ export class WritableProxy<T extends stream.Writable = stream.Writable> extends 
  * This noise is because we can't do multiple extends and we also can't seem to
  * do `extends WritableProxy<T> implement ReadableProxy<T>` (for `DuplexProxy`).
  */
-export interface IReadableProxy<T extends EventEmitter> extends ServerProxy<T> {
+export interface CommonReadableProxy<T extends EventEmitter> extends ServerProxy<T> {
   pipe<P extends WritableProxy>(destination: P, options?: { end?: boolean }): Promise<void>
   setEncoding(encoding: string): Promise<void>
 }
 
 export class ReadableProxy<T extends stream.Readable = stream.Readable> extends ServerProxy<T>
-  implements IReadableProxy<T> {
+  implements CommonReadableProxy<T> {
   public constructor(instance: T, bindEvents: string[] = []) {
     super({
       bindEvents: ["close", "end", "error"].concat(bindEvents),
@@ -92,7 +95,7 @@ export class ReadableProxy<T extends stream.Readable = stream.Readable> extends 
 }
 
 export class DuplexProxy<T extends stream.Duplex = stream.Duplex> extends WritableProxy<T>
-  implements IReadableProxy<T> {
+  implements CommonReadableProxy<T> {
   public constructor(stream: T, bindEvents: string[] = []) {
     super(stream, ["end"].concat(bindEvents), ["data"])
   }

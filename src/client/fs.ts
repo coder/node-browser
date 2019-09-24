@@ -4,6 +4,93 @@ import { Batch, ClientProxy, ClientServerProxy, EncodingOptions, EncodingOptions
 import { FsModuleProxy, ReadStreamProxy, Stats as IStats, WatcherProxy, WriteStreamProxy } from "../server/fs"
 import { Readable, Writable } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+class Stats implements fs.Stats {
+  public constructor(private readonly stats: IStats) {}
+
+  public get dev(): number {
+    return this.stats.dev
+  }
+  public get ino(): number {
+    return this.stats.ino
+  }
+  public get mode(): number {
+    return this.stats.mode
+  }
+  public get nlink(): number {
+    return this.stats.nlink
+  }
+  public get uid(): number {
+    return this.stats.uid
+  }
+  public get gid(): number {
+    return this.stats.gid
+  }
+  public get rdev(): number {
+    return this.stats.rdev
+  }
+  public get size(): number {
+    return this.stats.size
+  }
+  public get blksize(): number {
+    return this.stats.blksize
+  }
+  public get blocks(): number {
+    return this.stats.blocks
+  }
+  public get atime(): Date {
+    return this.stats.atime
+  }
+  public get mtime(): Date {
+    return this.stats.mtime
+  }
+  public get ctime(): Date {
+    return this.stats.ctime
+  }
+  public get birthtime(): Date {
+    return this.stats.birthtime
+  }
+  public get atimeMs(): number {
+    return this.stats.atimeMs
+  }
+  public get mtimeMs(): number {
+    return this.stats.mtimeMs
+  }
+  public get ctimeMs(): number {
+    return this.stats.ctimeMs
+  }
+  public get birthtimeMs(): number {
+    return this.stats.birthtimeMs
+  }
+  public isFile(): boolean {
+    return this.stats._isFile
+  }
+  public isDirectory(): boolean {
+    return this.stats._isDirectory
+  }
+  public isBlockDevice(): boolean {
+    return this.stats._isBlockDevice
+  }
+  public isCharacterDevice(): boolean {
+    return this.stats._isCharacterDevice
+  }
+  public isSymbolicLink(): boolean {
+    return this.stats._isSymbolicLink
+  }
+  public isFIFO(): boolean {
+    return this.stats._isFIFO
+  }
+  public isSocket(): boolean {
+    return this.stats._isSocket
+  }
+
+  public toObject(): object {
+    return JSON.parse(JSON.stringify(this))
+  }
+}
+
 class StatBatch extends Batch<IStats, { path: fs.PathLike }> {
   public constructor(private readonly proxy: FsModuleProxy) {
     super()
@@ -455,89 +542,5 @@ export class FsModule {
     }
 
     return watcher
-  }
-}
-
-class Stats implements fs.Stats {
-  public constructor(private readonly stats: IStats) {}
-
-  public get dev(): number {
-    return this.stats.dev
-  }
-  public get ino(): number {
-    return this.stats.ino
-  }
-  public get mode(): number {
-    return this.stats.mode
-  }
-  public get nlink(): number {
-    return this.stats.nlink
-  }
-  public get uid(): number {
-    return this.stats.uid
-  }
-  public get gid(): number {
-    return this.stats.gid
-  }
-  public get rdev(): number {
-    return this.stats.rdev
-  }
-  public get size(): number {
-    return this.stats.size
-  }
-  public get blksize(): number {
-    return this.stats.blksize
-  }
-  public get blocks(): number {
-    return this.stats.blocks
-  }
-  public get atime(): Date {
-    return this.stats.atime
-  }
-  public get mtime(): Date {
-    return this.stats.mtime
-  }
-  public get ctime(): Date {
-    return this.stats.ctime
-  }
-  public get birthtime(): Date {
-    return this.stats.birthtime
-  }
-  public get atimeMs(): number {
-    return this.stats.atimeMs
-  }
-  public get mtimeMs(): number {
-    return this.stats.mtimeMs
-  }
-  public get ctimeMs(): number {
-    return this.stats.ctimeMs
-  }
-  public get birthtimeMs(): number {
-    return this.stats.birthtimeMs
-  }
-  public isFile(): boolean {
-    return this.stats._isFile
-  }
-  public isDirectory(): boolean {
-    return this.stats._isDirectory
-  }
-  public isBlockDevice(): boolean {
-    return this.stats._isBlockDevice
-  }
-  public isCharacterDevice(): boolean {
-    return this.stats._isCharacterDevice
-  }
-  public isSymbolicLink(): boolean {
-    return this.stats._isSymbolicLink
-  }
-  public isFIFO(): boolean {
-    return this.stats._isFIFO
-  }
-  public isSocket(): boolean {
-    return this.stats._isSocket
-  }
-
-  public toObject(): object {
-    return JSON.parse(JSON.stringify(this))
   }
 }

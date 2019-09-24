@@ -11,6 +11,8 @@ import { ChildProcessModule } from "./child_process"
 import { FsModule } from "./fs"
 import { NetModule } from "./net"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface ProxyData {
   promise: Promise<void>
   instance: any
@@ -191,15 +193,17 @@ export class Client {
       field("args", args)
     )
 
-    this.connection.send(JSON.stringify(message))
+    this.send(message)
 
     // The server will send back a fail or success message when the method
     // has completed, so we listen for that based on the message's unique ID.
     const promise = new Promise((resolve, reject): void => {
       const dispose = (): void => {
+        /* eslint-disable @typescript-eslint/no-use-before-define */
         d1.dispose()
         d2.dispose()
         clearTimeout(timeout as any)
+        /* eslint-enable @typescript-eslint/no-use-before-define */
       }
 
       const timeout = setTimeout(() => {
@@ -295,7 +299,10 @@ export class Client {
   private async runCallback(message: Message.Server.Callback): Promise<void> {
     await this.ensureResolved(message.proxyId)
     logger.trace(() => ["running callback", field("proxyId", message.proxyId), field("callbackId", message.callbackId)])
-    this.getProxy(message.proxyId).callbacks.get(message.callbackId)!(...message.args.map((a) => this.decode(a)))
+    const cb = this.getProxy(message.proxyId).callbacks.get(message.callbackId)
+    if (cb) {
+      cb(...message.args.map((a) => this.decode(a)))
+    }
   }
 
   /**
@@ -308,11 +315,9 @@ export class Client {
 
     const schedulePing = (): void => {
       this.pingTimeout = setTimeout(() => {
-        this.connection.send(
-          JSON.stringify(<Message.Client.Ping>{
-            type: Message.Client.Type.Ping,
-          })
-        )
+        this.send({
+          type: Message.Client.Type.Ping,
+        } as Message.Client.Ping)
         schedulePing()
       }, this.pingTimeoutDelay)
     }
@@ -432,10 +437,16 @@ export class Client {
    * Get a proxy. Error if it doesn't exist.
    */
   private getProxy(proxyId: number | Module): ProxyData {
-    if (!this.proxies.has(proxyId)) {
+    const proxy = this.proxies.get(proxyId)
+    if (!proxy) {
       throw new Error(`proxy ${proxyId} disposed too early`)
     }
+    return proxy
+  }
 
-    return this.proxies.get(proxyId)!
+  private send(message: Message.Client.Message): void {
+    if (!this.disconnected) {
+      this.connection.send(JSON.stringify(message))
+    }
   }
 }

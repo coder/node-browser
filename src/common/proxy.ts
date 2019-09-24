@@ -1,6 +1,8 @@
 import { EventEmitter } from "events"
 import { isPromise } from "./util"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export type EventCallback = (event: string, ...args: any[]) => void
 export type EncodingOptions =
   | {
@@ -173,7 +175,7 @@ export interface ServerProxyOptions<T> {
 export abstract class ServerProxy<T extends EventEmitter = EventEmitter> {
   public readonly instance: T
 
-  private readonly callbacks = <EventCallback[]>[]
+  private readonly callbacks: EventCallback[] = []
 
   public constructor(private readonly options: ServerProxyOptions<T>) {
     this.instance = options.instance
@@ -266,7 +268,7 @@ interface BatchItem<T, A> {
 export abstract class Batch<T, A> {
   private idleTimeout: number | NodeJS.Timer | undefined
   private maxTimeout: number | NodeJS.Timer | undefined
-  private batch = <BatchItem<T, A>[]>[]
+  private batch: BatchItem<T, A>[] = []
 
   public constructor(
     /**

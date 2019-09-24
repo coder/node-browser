@@ -6,6 +6,8 @@ import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { ChildProcessModuleProxy, ChildProcessProxy } from "../server/child_process"
 import { ClientWritableProxy, ClientReadableProxy, Readable, Writable } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface ClientChildProcessProxy extends ChildProcessProxy, ClientServerProxy<cp.ChildProcess> {}
 
 export interface ClientChildProcessProxies {
@@ -27,9 +29,11 @@ export class ChildProcess extends ClientProxy<ClientChildProcessProxy> implement
 
   public constructor(proxyPromises: Promise<ClientChildProcessProxies>) {
     super(proxyPromises.then((p) => p.childProcess))
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     this.stdin = new Writable(proxyPromises.then((p) => p.stdin!))
     this.stdout = new Readable(proxyPromises.then((p) => p.stdout!))
     this.stderr = new Readable(proxyPromises.then((p) => p.stderr!))
+    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     this.stdio = [this.stdin, this.stdout, this.stderr, null, null]
 
     this.catch(

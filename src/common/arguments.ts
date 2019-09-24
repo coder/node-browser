@@ -1,6 +1,8 @@
 import { ClientServerProxy, Module, ServerProxy } from "./proxy"
 import { isProxy } from "./util"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 enum Type {
   Array,
   Buffer,
@@ -81,21 +83,21 @@ export const encode = <P = ClientServerProxy | ServerProxy>(
       if (typeof id === "string") {
         throw new Error("unable to serialize module proxy")
       }
-      return <EncodedProxy>{ type: Type.Proxy, id }
+      return { type: Type.Proxy, id } as EncodedProxy
     } else if (
       currentValue instanceof Error ||
       (currentValue && typeof currentValue.message !== "undefined" && typeof currentValue.stack !== "undefined")
     ) {
-      return <EncodedError>{
+      return {
         type: Type.Error,
         code: currentValue.code,
         message: currentValue.message,
         stack: currentValue.stack,
-      }
+      } as EncodedError
     } else if (currentValue instanceof Uint8Array || currentValue instanceof Buffer) {
-      return <EncodedBuffer>{ type: Type.Buffer, data: currentValue }
+      return { type: Type.Buffer, data: currentValue } as EncodedBuffer
     } else if (Array.isArray(currentValue)) {
-      return <EncodedArray>{ type: Type.Array, values: currentValue.map(convert) }
+      return { type: Type.Array, values: currentValue.map(convert) } as EncodedArray
     } else if (currentValue instanceof Date || (currentValue && typeof currentValue.getTime === "function")) {
       return { type: Type.Date, date: currentValue.toString() }
     } else if (currentValue !== null && typeof currentValue === "object") {
@@ -103,18 +105,18 @@ export const encode = <P = ClientServerProxy | ServerProxy>(
       Object.keys(currentValue).forEach((key) => {
         values[key] = convert(currentValue[key])
       })
-      return <EncodedObject>{ type: Type.Object, values }
+      return { type: Type.Object, values } as EncodedObject
     } else if (currentValue === null) {
       return currentValue
     }
     switch (typeof currentValue) {
       case "undefined":
-        return <EncodedUndefined>{ type: Type.Undefined }
+        return { type: Type.Undefined } as EncodedUndefined
       case "function":
         if (!storeFunction) {
           throw new Error("no way to serialize function")
         }
-        return <EncodedFunction>{ type: Type.Function, id: storeFunction(currentValue) }
+        return { type: Type.Function, id: storeFunction(currentValue) } as EncodedFunction
       case "number":
       case "string":
       case "boolean":
@@ -150,32 +152,34 @@ export const decode = (
       case Type.Array:
         return currentArgument.values.map(convert)
       case Type.Buffer:
-        return Buffer.from((<EncodedBuffer>currentArgument).data)
+        return Buffer.from((currentArgument as EncodedBuffer).data)
       case Type.Date:
-        return new Date((<EncodedDate>currentArgument).date)
-      case Type.Error:
-        const error = new Error((<EncodedError>currentArgument).message)
-        ;(error as NodeJS.ErrnoException).code = (<EncodedError>currentArgument).code
-        ;(error as any).originalStack = (<EncodedError>currentArgument).stack
+        return new Date((currentArgument as EncodedDate).date)
+      case Type.Error: {
+        const error = new Error((currentArgument as EncodedError).message)
+        ;(error as NodeJS.ErrnoException).code = (currentArgument as EncodedError).code
+        ;(error as any).originalStack = (currentArgument as EncodedError).stack
         return error
+      }
       case Type.Function:
         if (!runCallback) {
           throw new Error("no way to run remote callback")
         }
         return (...args: any[]): void => {
-          return runCallback((<EncodedFunction>currentArgument).id, args)
+          return runCallback((currentArgument as EncodedFunction).id, args)
         }
-      case Type.Object:
+      case Type.Object: {
         const obj: { [Key: string]: any } = {}
-        Object.keys((<EncodedObject>currentArgument).values).forEach((key) => {
-          obj[key] = convert((<EncodedObject>currentArgument).values[key])
+        Object.keys((currentArgument as EncodedObject).values).forEach((key) => {
+          obj[key] = convert((currentArgument as EncodedObject).values[key])
         })
         return obj
+      }
       case Type.Proxy:
         if (!createProxy) {
           throw new Error("no way to create proxy")
         }
-        return createProxy((<EncodedProxy>currentArgument).id)
+        return createProxy((currentArgument as EncodedProxy).id)
       case Type.Undefined:
         return undefined
     }

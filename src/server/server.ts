@@ -9,6 +9,8 @@ import { ChildProcessModuleProxy, ForkProvider } from "./child_process"
 import { FsModuleProxy } from "./fs"
 import { NetModuleProxy } from "./net"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface ServerOptions {
   readonly fork?: ForkProvider
 }
@@ -53,12 +55,10 @@ export class Server {
     this.storeProxy(new FsModuleProxy(), Module.Fs)
     this.storeProxy(new NetModuleProxy(), Module.Net)
 
-    connection.send(
-      JSON.stringify(<Message.Server.Init>{
-        type: Message.Server.Type.Init,
-        os: os.platform(),
-      })
-    )
+    this.send({
+      type: Message.Server.Type.Init,
+      os: os.platform(),
+    } as Message.Server.Init)
   }
 
   /**
@@ -71,9 +71,9 @@ export class Server {
         break
       case Message.Client.Type.Ping:
         logger.trace("ping")
-        this.send(<Message.Server.Pong>{
+        this.send({
           type: Message.Server.Type.Pong,
-        })
+        } as Message.Server.Pong)
         break
       default:
         throw new Error("unknown message type")
@@ -135,12 +135,12 @@ export class Server {
    */
   private sendCallback(proxyId: number | Module, callbackId: number, args: any[]): void {
     logger.trace(() => ["sending callback", field("proxyId", proxyId), field("callbackId", callbackId)])
-    this.send(<Message.Server.Callback>{
+    this.send({
       type: Message.Server.Type.Callback,
       callbackId,
       proxyId,
       args: args.map((a) => this.encode(a)),
-    })
+    } as Message.Server.Callback)
   }
 
   /**
@@ -200,12 +200,12 @@ export class Server {
       field("event", event),
       field("args", args.map((a) => (a instanceof Buffer ? a.toString() : a))),
     ])
-    this.send(<Message.Server.Event>{
+    this.send({
       type: Message.Server.Type.Event,
       event,
       proxyId,
       args: args.map((a) => this.encode(a)),
-    })
+    } as Message.Server.Event)
   }
 
   /**
@@ -214,11 +214,11 @@ export class Server {
   private sendResponse(messageId: number, response: any): void {
     const encoded = this.encode(response)
     logger.trace("sending resolve", field("messageId", messageId), field("response", encoded))
-    this.send(<Message.Server.Success>{
+    this.send({
       type: Message.Server.Type.Success,
       messageId,
       response: encoded,
-    })
+    } as Message.Server.Success)
   }
 
   /**
@@ -226,11 +226,11 @@ export class Server {
    */
   private sendException(messageId: number, error: Error): void {
     logger.trace("sending reject", field("messageId", messageId), field("message", error.message))
-    this.send(<Message.Server.Fail>{
+    this.send({
       type: Message.Server.Type.Fail,
       messageId,
       response: this.encode(error),
-    })
+    } as Message.Server.Fail)
   }
 
   /**
@@ -253,10 +253,11 @@ export class Server {
    * Get a proxy. Error if it doesn't exist.
    */
   private getProxy(proxyId: number | Module): ProxyData {
-    if (!this.proxies.has(proxyId)) {
+    const proxy = this.proxies.get(proxyId)
+    if (!proxy) {
       throw new Error(`proxy ${proxyId} disposed too early`)
     }
-    return this.proxies.get(proxyId)!
+    return proxy
   }
 
   private send(message: Message.Server.Message): void {

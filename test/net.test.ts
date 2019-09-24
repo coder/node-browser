@@ -2,7 +2,7 @@ import "leaked-handles"
 import * as assert from "assert"
 import * as nativeNet from "net"
 import { Module } from "../src/common/proxy"
-import { createClient, Helper } from "./helpers"
+import { createClient, Helper, testFn } from "./helpers"
 
 describe("net", () => {
   const client = createClient()
@@ -30,32 +30,32 @@ describe("net", () => {
     it("should fail to connect", async () => {
       const socket = new net.Socket()
 
-      const called: any[] = []
-      socket.on("error", (v) => called.push(v))
+      const fn = testFn()
+      socket.on("error", fn)
 
       socket.connect("/tmp/t/e/s/t/d/o/e/s/n/o/t/e/x/i/s/t")
 
       await new Promise((r): nativeNet.Socket => socket.on("close", r))
 
-      assert.equal(called.length, 1)
+      assert.equal(fn.called, 1)
     })
 
     it("should remove event listener", async () => {
       const socket = new net.Socket()
 
-      const called: any[] = []
-      const called2: any[] = []
+      const fn = testFn()
+      const fn2 = testFn()
 
-      const on = (v: Error) => called.push(v)
+      const on = fn
       socket.on("error", on)
-      socket.on("error", (v) => called2.push(v))
+      socket.on("error", fn2)
       socket.off("error", on)
 
       socket.connect("/tmp/t/e/s/t/d/o/e/s/n/o/t/e/x/i/s/t")
 
       await new Promise((r): nativeNet.Socket => socket.on("close", r))
-      assert.equal(called.length, 0)
-      assert.equal(called2.length, 1)
+      assert.equal(fn.called, 0)
+      assert.equal(fn2.called, 1)
     })
 
     it("should connect", async () => {

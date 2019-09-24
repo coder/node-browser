@@ -3,6 +3,8 @@ import { ServerProxy } from "../common/proxy"
 import { withEnv } from "../common/util"
 import { WritableProxy, ReadableProxy } from "./stream"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export type ForkProvider = (modulePath: string, args?: string[], options?: cp.ForkOptions) => cp.ChildProcess
 
 export class ChildProcessProxy extends ServerProxy<cp.ChildProcess> {
@@ -51,12 +53,12 @@ export class ChildProcessProxy extends ServerProxy<cp.ChildProcess> {
 
   public async dispose(): Promise<void> {
     if (!this.exited) {
-      await new Promise((resolve) => {
+      await new Promise((resolve): void => {
+        const timeout = setTimeout(() => this.instance.kill("SIGKILL"), 5000)
         this.onDone(() => {
           clearTimeout(timeout)
           resolve()
         })
-        const timeout = setTimeout(() => this.instance.kill("SIGKILL"), 5000)
         this.instance.kill()
       })
     }

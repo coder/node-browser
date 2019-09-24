@@ -5,13 +5,14 @@ import * as path from "path"
 import { Readable } from "stream"
 import * as util from "util"
 import { Module } from "../src/common/proxy"
-import { createClient } from "./helpers"
+import { createClient, testFn } from "./helpers"
 
 describe("child_process", () => {
   const client = createClient()
-  const cp = (client.modules[Module.ChildProcess] as any) as typeof import("child_process")
+  const cp = (client.modules[Module.ChildProcess] as any) as typeof import("child_process") // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const getStdout = async (proc: ChildProcess): Promise<string> => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return new Promise<Buffer>((r): Readable => proc.stdout!.once("data", r)).then((s) => s.toString())
   }
 
@@ -37,11 +38,11 @@ describe("child_process", () => {
     it("should cat stdin", async () => {
       const proc = cp.spawn("cat", [])
       assert.equal(proc.pid, -1)
-      proc.stdin!.write("banana")
+      proc.stdin.write("banana")
       const result = await getStdout(proc)
       assert.equal(result, "banana")
 
-      proc.stdin!.end()
+      proc.stdin.end()
       proc.kill()
 
       assert.equal(proc.pid > -1, true)
@@ -90,18 +91,17 @@ describe("child_process", () => {
       const client = createClient()
       const cp = client.modules[Module.ChildProcess]
       const proc = cp.fork(path.join(__dirname, "forker.js"))
-      const called: Error[] = []
-      proc.on("error", (error: Error) => {
-        called.push(error)
-      })
+      const fn = testFn()
+      proc.on("error", fn)
 
       proc.send({ bananas: true })
       const result = await new Promise((r): ChildProcess => proc.on("message", r))
       assert.deepEqual(result, { bananas: true })
 
       client.dispose()
-      assert.equal(called.length, 1)
-      assert.equal(called[0].message, "disconnected")
+      assert.equal(fn.called, 1)
+      assert.equal(fn.args.length, 1)
+      assert.equal(fn.args[0].message, "disconnected")
     })
   })
 })

@@ -9,7 +9,7 @@ import { createClient, Helper } from "./helpers"
 
 describe("fs", () => {
   const client = createClient()
-  const fs = (client.modules[Module.Fs] as any) as typeof import("fs")
+  const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
   const helper = new Helper("fs")
 
   before(async () => {

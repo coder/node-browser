@@ -267,7 +267,7 @@ export class FsModule {
 
   public fstat = (fd: number, callback: (err: NodeJS.ErrnoException, stats: fs.Stats) => void): void => {
     callbackify(this.proxy.fstat)(fd, (error, stats) => {
-      callback(error, stats && new Stats(stats))
+      callback(error!, stats && new Stats(stats))
     })
   }
 
@@ -319,7 +319,7 @@ export class FsModule {
 
   public lstat = (path: fs.PathLike, callback: (err: NodeJS.ErrnoException, stats: fs.Stats) => void): void => {
     callbackify(this.lstatBatch.add)({ path }, (error, stats) => {
-      callback(error, stats && new Stats(stats))
+      callback(error!, stats && new Stats(stats))
     })
   }
 
@@ -394,7 +394,7 @@ export class FsModule {
   public readdir = (
     path: fs.PathLike,
     options: EncodingOptionsCallback,
-    callback?: (err: NodeJS.ErrnoException, files: Buffer[] | fs.Dirent[] | string[]) => void
+    callback?: (err: NodeJS.ErrnoException | null, files: Buffer[] | fs.Dirent[] | string[]) => void
   ): void => {
     if (typeof options === "function") {
       callback = options
@@ -441,7 +441,7 @@ export class FsModule {
 
   public stat = (path: fs.PathLike, callback: (err: NodeJS.ErrnoException, stats: fs.Stats) => void): void => {
     callbackify(this.statBatch.add)({ path }, (error, stats) => {
-      callback(error, stats && new Stats(stats))
+      callback(error!, stats && new Stats(stats))
     })
   }
 

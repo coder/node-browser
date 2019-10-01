@@ -21,7 +21,7 @@ export class ChildProcess extends ClientProxy<ClientChildProcessProxy> implement
   public readonly stdin: stream.Writable
   public readonly stdout: stream.Readable
   public readonly stderr: stream.Readable
-  public readonly stdio: [stream.Writable, stream.Readable, stream.Readable, null, null]
+  public readonly stdio: [stream.Writable, stream.Readable, stream.Readable]
 
   private _connected = false
   private _killed = false
@@ -34,7 +34,7 @@ export class ChildProcess extends ClientProxy<ClientChildProcessProxy> implement
     this.stdout = new Readable(proxyPromises.then((p) => p.stdout!))
     this.stderr = new Readable(proxyPromises.then((p) => p.stderr!))
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
-    this.stdio = [this.stdin, this.stdout, this.stderr, null, null]
+    this.stdio = [this.stdin, this.stdout, this.stderr]
 
     this.catch(
       this.proxy.getPid().then((pid) => {

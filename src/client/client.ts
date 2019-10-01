@@ -1,8 +1,7 @@
 import { PathLike } from "fs"
 import { ExecException, ExecOptions } from "child_process"
 import * as util from "../../lib/util"
-import { logger, field } from "@coder/logger"
-import { ReadWriteConnection } from "../common/connection"
+import { ReadWriteConnection, Logger, DefaultLogger } from "../common/connection"
 import { Emitter } from "../common/events"
 import * as Message from "../common/messages"
 import { ClientServerProxy, Module, ServerProxy } from "../common/proxy"
@@ -50,12 +49,15 @@ export class Client {
   /**
    * @param connection Established connection to the server
    */
-  public constructor(private readonly connection: ReadWriteConnection) {
+  public constructor(
+    private readonly connection: ReadWriteConnection,
+    private readonly logger: Logger = new DefaultLogger()
+  ) {
     connection.onMessage(async (data) => {
       try {
         await this.handleMessage(JSON.parse(data))
       } catch (error) {
-        logger.error("Failed to handle server message", field("error", error.message))
+        this.logger.error("Failed to handle server message", { error: error.message })
       }
     })
 
@@ -106,14 +108,13 @@ export class Client {
      */
     const handleDisconnect = (): void => {
       this.disconnected = true
-      logger.trace(() => [
-        "disconnected from server",
-        field("proxies", this.proxies.size),
-        field("callbacks", Array.from(this.proxies.values()).reduce((count, p) => count + p.callbacks.size, 0)),
-        field("success listeners", this.successEmitter.counts),
-        field("fail listeners", this.failEmitter.counts),
-        field("event listeners", this.eventEmitter.counts),
-      ])
+      this.logger.trace("disconnected from server", () => ({
+        proxies: this.proxies.size,
+        callbacks: Array.from(this.proxies.values()).reduce((count, p) => count + p.callbacks.size, 0),
+        success: this.successEmitter.counts,
+        fail: this.failEmitter.counts,
+        event: this.eventEmitter.counts,
+      }))
 
       const error = new Error("disconnected")
       this.failEmitter.emit({
@@ -171,7 +172,7 @@ export class Client {
     // the callback becomes invalid.
     const storeCallback = (cb: (...args: any[]) => void): number => {
       const callbackId = this.callbackId++
-      logger.trace(() => ["storing callback", field("proxyId", proxyId), field("callbackId", callbackId)])
+      this.logger.trace("storing callback", { proxyId, callbackId })
 
       this.getProxy(proxyId).callbacks.set(callbackId, cb)
 
@@ -187,13 +188,7 @@ export class Client {
       args: args.map((a) => encode<ClientServerProxy>(a, storeCallback, (p) => p.proxyId)),
     }
 
-    logger.trace(
-      "sending",
-      field("messageId", messageId),
-      field("proxyId", proxyId),
-      field("method", method),
-      field("args", args)
-    )
+    this.logger.trace("sending", { messageId, proxyId, method, args })
 
     this.send(message)
 
@@ -256,7 +251,7 @@ export class Client {
    * Convert success message to a success event.
    */
   private emitSuccess(message: Message.Server.Success): void {
-    logger.trace("received resolve", field("messageId", message.messageId), field("response", message.response))
+    this.logger.trace("received resolve", { messageId: message.messageId, response: message.response })
     this.successEmitter.emit(message.messageId, message)
   }
 
@@ -264,7 +259,7 @@ export class Client {
    * Convert fail message to a fail event.
    */
   private emitFail(message: Message.Server.Fail): void {
-    logger.trace("received reject", field("messageId", message.messageId), field("message", message.response))
+    this.logger.trace("received reject", { messageId: message.messageId, response: message.response })
     this.failEmitter.emit(message.messageId, message)
   }
 
@@ -278,12 +273,11 @@ export class Client {
   private async emitEvent(message: Message.Server.Event): Promise<void> {
     await this.ensureResolved(message.proxyId)
     const args = message.args.map((a) => this.decode(a))
-    logger.trace(() => [
-      "received event",
-      field("proxyId", message.proxyId),
-      field("event", message.event),
-      field("args", args.map((a) => (a instanceof Buffer ? a.toString() : a))),
-    ])
+    this.logger.trace("received event", () => ({
+      proxyId: message.proxyId,
+      event: message.event,
+      args: args.map((a) => (a instanceof Buffer ? a.toString() : a)),
+    }))
     this.eventEmitter.emit(message.proxyId, {
       event: message.event,
       args,
@@ -300,7 +294,7 @@ export class Client {
    */
   private async runCallback(message: Message.Server.Callback): Promise<void> {
     await this.ensureResolved(message.proxyId)
-    logger.trace(() => ["running callback", field("proxyId", message.proxyId), field("callbackId", message.callbackId)])
+    this.logger.trace("running callback", { proxyId: message.proxyId, callbackId: message.callbackId })
     const cb = this.getProxy(message.proxyId).callbacks.get(message.callbackId)
     if (cb) {
       cb(...message.args.map((a) => this.decode(a)))
@@ -334,7 +328,7 @@ export class Client {
     proxyId: number | Module,
     promise: Promise<any> = Promise.resolve()
   ): T {
-    logger.trace(() => ["creating proxy", field("proxyId", proxyId)])
+    this.logger.trace("creating proxy", { proxyId })
 
     const instance = new Proxy(
       {
@@ -378,18 +372,14 @@ export class Client {
 
     instance.onDone(() => {
       const log = (): void => {
-        logger.trace(() => [
-          typeof proxyId === "number" ? "disposed proxy" : "disposed proxy callbacks",
-          field("proxyId", proxyId),
-          field("disconnected", this.disconnected),
-          field(
-            "callbacks",
-            Array.from(this.proxies.values()).reduce((count, proxy) => count + proxy.callbacks.size, 0)
-          ),
-          field("success listeners", this.successEmitter.counts),
-          field("fail listeners", this.failEmitter.counts),
-          field("event listeners", this.eventEmitter.counts),
-        ])
+        this.logger.trace(typeof proxyId === "number" ? "disposed proxy" : "disposed proxy callbacks", () => ({
+          proxyId,
+          disconnected: this.disconnected,
+          callbacks: Array.from(this.proxies.values()).reduce((count, proxy) => count + proxy.callbacks.size, 0),
+          success: this.successEmitter.counts,
+          fail: this.failEmitter.counts,
+          event: this.eventEmitter.counts,
+        }))
       }
 
       // Uniquely identified items (top-level module proxies) can continue to

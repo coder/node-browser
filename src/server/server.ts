@@ -1,6 +1,5 @@
 import * as os from "os"
-import { field, logger } from "@coder/logger"
-import { ReadWriteConnection } from "../common/connection"
+import { ReadWriteConnection, Logger, DefaultLogger } from "../common/connection"
 import * as Message from "../common/messages"
 import { Module, ServerProxy } from "../common/proxy"
 import { isPromise, isProxy } from "../common/util"
@@ -13,6 +12,7 @@ import { NetModuleProxy } from "./net"
 
 export interface ServerOptions {
   readonly fork?: ForkProvider
+  readonly logger?: Logger
 }
 
 interface ProxyData {
@@ -28,23 +28,25 @@ export class Server {
   private readonly proxies = new Map<number | Module, ProxyData>()
   private disconnected = false
   private readonly responseTimeout = 10000
+  private readonly logger: Logger
 
   public constructor(private readonly connection: ReadWriteConnection, private readonly options?: ServerOptions) {
+    this.logger = (options && options.logger) || new DefaultLogger()
     connection.onMessage(async (data) => {
       try {
         await this.handleMessage(JSON.parse(data))
       } catch (error) {
-        logger.error("Failed to handle client message", field("error", error.message))
+        this.logger.error("Failed to handle client message", { error: error.message })
       }
     })
 
     connection.onClose(() => {
       this.disconnected = true
-      logger.trace(() => ["disconnected from client", field("proxies", this.proxies.size)])
+      this.logger.trace("disconnected from client", { proxies: this.proxies.size })
       this.proxies.forEach((proxy, proxyId) => {
         if (isProxy(proxy.instance)) {
           proxy.instance.dispose().catch((error) => {
-            logger.error(error.message)
+            this.logger.error(error.message)
           })
         }
         this.removeProxy(proxyId)
@@ -70,7 +72,7 @@ export class Server {
         await this.runMethod(message)
         break
       case Message.Client.Type.Ping:
-        logger.trace("ping")
+        this.logger.trace("ping")
         this.send({
           type: Message.Server.Type.Pong,
         } as Message.Server.Pong)
@@ -91,13 +93,7 @@ export class Server {
       return decode(a, (id, args) => this.sendCallback(proxyId, id, args), (id) => this.getProxy(id).instance)
     })
 
-    logger.trace(
-      "received",
-      field("messageId", messageId),
-      field("proxyId", proxyId),
-      field("method", method),
-      field("args", args)
-    )
+    this.logger.trace("received", { messageId, proxyId, method, args })
 
     let response: any
     try {
@@ -119,7 +115,7 @@ export class Server {
         throw new Error(`"${method}" must return a promise`)
       }
     } catch (error) {
-      logger.error(error.message, field("type", typeof response), field("proxyId", proxyId))
+      this.logger.error(error.message, { type: typeof response, proxyId })
       this.sendException(messageId, error)
     }
 
@@ -134,7 +130,7 @@ export class Server {
    * Send a callback to the client.
    */
   private sendCallback(proxyId: number | Module, callbackId: number, args: any[]): void {
-    logger.trace(() => ["sending callback", field("proxyId", proxyId), field("callbackId", callbackId)])
+    this.logger.trace("sending callback", { proxyId, callbackId })
     this.send({
       type: Message.Server.Type.Callback,
       callbackId,
@@ -159,7 +155,7 @@ export class Server {
     if (this.disconnected) {
       if (isProxy(instance)) {
         instance.dispose().catch((error) => {
-          logger.error(error.message)
+          this.logger.error(error.message)
         })
       }
 
@@ -167,7 +163,7 @@ export class Server {
     }
 
     const proxyId = moduleProxyId || this.proxyId++
-    logger.trace(() => ["storing proxy", field("proxyId", proxyId)])
+    this.logger.trace("storing proxy", { proxyId })
 
     this.proxies.set(proxyId, { instance })
 
@@ -179,7 +175,7 @@ export class Server {
           this.sendEvent(proxyId, "done")
           this.getProxy(proxyId).disposeTimeout = setTimeout(() => {
             instance.dispose().catch((error) => {
-              logger.error(error.message)
+              this.logger.error(error.message)
             })
             this.removeProxy(proxyId)
           }, this.responseTimeout)
@@ -194,12 +190,11 @@ export class Server {
    * Send an event to the client.
    */
   private sendEvent(proxyId: number | Module, event: string, ...args: any[]): void {
-    logger.trace(() => [
-      "sending event",
-      field("proxyId", proxyId),
-      field("event", event),
-      field("args", args.map((a) => (a instanceof Buffer ? a.toString() : a))),
-    ])
+    this.logger.trace("sending event", () => ({
+      proxyId,
+      event,
+      args: args.map((a) => (a instanceof Buffer ? a.toString() : a)),
+    }))
     this.send({
       type: Message.Server.Type.Event,
       event,
@@ -213,7 +208,7 @@ export class Server {
    */
   private sendResponse(messageId: number, response: any): void {
     const encoded = this.encode(response)
-    logger.trace("sending resolve", field("messageId", messageId), field("response", encoded))
+    this.logger.trace("sending resolve", { messageId, response: encoded })
     this.send({
       type: Message.Server.Type.Success,
       messageId,
@@ -225,7 +220,7 @@ export class Server {
    * Send an exception back to the client.
    */
   private sendException(messageId: number, error: Error): void {
-    logger.trace("sending reject", field("messageId", messageId), field("message", error.message))
+    this.logger.trace("sending reject", { messageId, message: error.message })
     this.send({
       type: Message.Server.Type.Fail,
       messageId,
@@ -239,7 +234,7 @@ export class Server {
   private removeProxy(proxyId: number | Module): void {
     clearTimeout(this.getProxy(proxyId).disposeTimeout as any)
     this.proxies.delete(proxyId)
-    logger.trace(() => ["disposed and removed proxy", field("proxyId", proxyId), field("proxies", this.proxies.size)])
+    this.logger.trace("disposed and removed proxy", { proxyId, proxies: this.proxies.size })
   }
 
   /**

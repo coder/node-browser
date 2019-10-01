@@ -1,5 +1,5 @@
 import * as assert from "assert"
-import { Emitter } from "../src/common/events"
+import { Emitter, EventEmitter } from "../src/common/events"
 import { testFn } from "./helpers"
 
 describe("Event", () => {
@@ -120,5 +120,43 @@ describe("Event", () => {
     emitter.emit(1, 12)
 
     assert.equal(fn.called, 0)
+  })
+})
+
+describe("EventEmitter", () => {
+  const emitter = new EventEmitter()
+
+  it("should listen to an event", () => {
+    const fn = testFn()
+    emitter.on("test", fn)
+    emitter.emit("test", 10)
+    assert.equal(fn.called, 1)
+    assert.deepEqual(fn.args, [10])
+
+    emitter.emit("test", 11)
+    assert.equal(fn.called, 2)
+    assert.deepEqual(fn.args, [10, 11])
+
+    emitter.off("test", fn)
+  })
+
+  it("should stop listening to an event", () => {
+    const fn = testFn()
+    emitter.on("test", fn)
+    emitter.off("test", fn)
+    emitter.emit("test", 10)
+    assert.equal(fn.called, 0)
+  })
+
+  it("should listen once", () => {
+    const fn = testFn()
+    emitter.once("test", fn)
+    emitter.emit("test", 10)
+    assert.equal(fn.called, 1)
+    assert.deepEqual(fn.args, [10])
+
+    emitter.emit("test", 11)
+    assert.equal(fn.called, 1)
+    assert.deepEqual(fn.args, [10])
   })
 })

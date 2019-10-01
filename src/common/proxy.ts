@@ -1,4 +1,5 @@
-import { EventEmitter } from "events"
+import { EventEmitter as NodeEventEmitter } from "events"
+import { EventEmitter } from "./events"
 import { isPromise } from "./util"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -65,17 +66,6 @@ export abstract class ClientProxy<T extends ClientServerProxy> extends EventEmit
         this.handleDisconnect()
       })
     }
-  }
-
-  /**
-   * Remove an event listener.
-   */
-  public off(event: string, cb: (...args: any[]) => void): this {
-    // Fill it here because the fill we're using to provide EventEmitter for the
-    // browser doesn't appear to include `off`.
-    this.removeListener(event, cb)
-
-    return this
   }
 
   /**
@@ -172,7 +162,7 @@ export interface ServerProxyOptions<T> {
  * Events listeners are added client-side (since all events automatically
  * forward to the client), so onDone and onEvent do not need to be asynchronous.
  */
-export abstract class ServerProxy<T extends EventEmitter = EventEmitter> {
+export abstract class ServerProxy<T extends NodeEventEmitter = NodeEventEmitter> {
   public readonly instance: T
 
   private readonly callbacks: EventCallback[] = []
@@ -243,7 +233,7 @@ export abstract class ServerProxy<T extends EventEmitter = EventEmitter> {
  * client-side version of the server proxy. The event listeners are handled by
  * the client and the remaining methods are proxied to the server.
  */
-export interface ClientServerProxy<T extends EventEmitter = EventEmitter> extends ServerProxy<T> {
+export interface ClientServerProxy<T extends NodeEventEmitter = NodeEventEmitter> extends ServerProxy<T> {
   proxyId: number | Module
 }
 

@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: yarn
     - name: Build node-browser
-      run: yarn prepare
+      run: yarn prepublishOnly
 
   lint:
 

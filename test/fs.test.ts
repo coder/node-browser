@@ -3,13 +3,14 @@ import * as assert from "assert"
 import * as nativeFs from "fs"
 import * as os from "os"
 import * as path from "path"
-import * as util from "util"
+import * as nativeUtil from "util"
 import { Module } from "../src/common/proxy"
 import { createClient, Helper } from "./helpers"
 
 describe("fs", () => {
   const client = createClient()
   const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
+  const util = client.modules[Module.Util]
   const helper = new Helper("fs")
 
   before(async () => {
@@ -30,19 +31,19 @@ describe("fs", () => {
     it("should append to existing file", async () => {
       const file = await helper.createTmpFile()
       assert.equal(await util.promisify(fs.appendFile)(file, "howdy"), undefined)
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
     })
 
     it("should create then append to nonexistent file", async () => {
       const file = helper.tmpFile()
       assert.equal(await util.promisify(fs.appendFile)(file, "howdy"), undefined)
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
     })
 
     it("should fail to append to file in nonexistent directory", async () => {
       const file = path.join(helper.tmpFile(), "nope")
       await assert.rejects(util.promisify(fs.appendFile)(file, "howdy"), /ENOENT/)
-      assert.equal(await util.promisify(nativeFs.exists)(file), false)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(file), false)
     })
   })
 
@@ -60,7 +61,7 @@ describe("fs", () => {
   describe("chown", () => {
     it("should chown existing file", async () => {
       const file = await helper.createTmpFile()
-      assert.equal(await util.promisify(nativeFs.chown)(file, os.userInfo().uid, os.userInfo().gid), undefined)
+      assert.equal(await nativeUtil.promisify(nativeFs.chown)(file, os.userInfo().uid, os.userInfo().gid), undefined)
     })
 
     it("should fail to chown nonexistent file", async () => {
@@ -71,7 +72,7 @@ describe("fs", () => {
   describe("close", () => {
     it("should close opened file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "r")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "r")
       assert.equal(await util.promisify(fs.close)(fd), undefined)
     })
 
@@ -110,7 +111,7 @@ describe("fs", () => {
         new Promise((resolve): nativeFs.WriteStream => stream.on("finish", resolve)),
       ])
 
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), content)
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), content)
     })
   })
 
@@ -118,7 +119,7 @@ describe("fs", () => {
     it("should read a file", async () => {
       const file = helper.tmpFile()
       const content = "foobar"
-      await util.promisify(nativeFs.writeFile)(file, content)
+      await nativeUtil.promisify(nativeFs.writeFile)(file, content)
 
       const reader = fs.createReadStream(file)
 
@@ -136,7 +137,7 @@ describe("fs", () => {
     it("should pipe to a writable stream", async () => {
       const source = helper.tmpFile()
       const content = "foo"
-      await util.promisify(nativeFs.writeFile)(source, content)
+      await nativeUtil.promisify(nativeFs.writeFile)(source, content)
 
       const destination = helper.tmpFile()
       const reader = fs.createReadStream(source)
@@ -149,7 +150,7 @@ describe("fs", () => {
         reader.pipe(writer)
       })
 
-      assert.equal(await util.promisify(nativeFs.readFile)(destination, "utf8"), content)
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(destination, "utf8"), content)
     })
   })
 
@@ -166,9 +167,9 @@ describe("fs", () => {
   describe("fchmod", () => {
     it("should fchmod existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "r")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "r")
       assert.equal(await util.promisify(fs.fchmod)(fd, "755"), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fchmod nonexistent file", async () => {
@@ -179,9 +180,9 @@ describe("fs", () => {
   describe("fchown", () => {
     it("should fchown existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "r")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "r")
       assert.equal(await util.promisify(fs.fchown)(fd, os.userInfo().uid, os.userInfo().gid), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fchown nonexistent file", async () => {
@@ -192,9 +193,9 @@ describe("fs", () => {
   describe("fdatasync", () => {
     it("should fdatasync existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "r")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "r")
       assert.equal(await util.promisify(fs.fdatasync)(fd), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fdatasync nonexistent file", async () => {
@@ -204,10 +205,10 @@ describe("fs", () => {
 
   describe("fstat", () => {
     it("should fstat existing file", async () => {
-      const fd = await util.promisify(nativeFs.open)(__filename, "r")
-      const stat = await util.promisify(nativeFs.fstat)(fd)
+      const fd = await nativeUtil.promisify(nativeFs.open)(__filename, "r")
+      const stat = await nativeUtil.promisify(nativeFs.fstat)(fd)
       assert.equal((await util.promisify(fs.fstat)(fd)).size, stat.size)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fstat", async () => {
@@ -218,9 +219,9 @@ describe("fs", () => {
   describe("fsync", () => {
     it("should fsync existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "r")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "r")
       assert.equal(await util.promisify(fs.fsync)(fd), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to fsync nonexistent file", async () => {
@@ -231,9 +232,9 @@ describe("fs", () => {
   describe("ftruncate", () => {
     it("should ftruncate existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "w")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "w")
       assert.equal(await util.promisify(fs.ftruncate)(fd, 1), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to ftruncate nonexistent file", async () => {
@@ -244,16 +245,16 @@ describe("fs", () => {
   describe("futimes", () => {
     it("should futimes existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "w")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "w")
       assert.equal(await util.promisify(fs.futimes)(fd, os.userInfo().uid, os.userInfo().gid), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should futimes existing file with date", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "w")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "w")
       assert.equal(await util.promisify(fs.futimes)(fd, new Date(), new Date()), undefined)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to futimes nonexistent file", async () => {
@@ -300,7 +301,7 @@ describe("fs", () => {
 
   describe("lstat", () => {
     it("should lstat existing file", async () => {
-      const stat = await util.promisify(nativeFs.lstat)(__filename)
+      const stat = await nativeUtil.promisify(nativeFs.lstat)(__filename)
       assert.equal((await util.promisify(fs.lstat)(__filename)).size, stat.size)
     })
 
@@ -344,8 +345,8 @@ describe("fs", () => {
 
   describe("read", () => {
     it("should read existing file", async () => {
-      const fd = await util.promisify(nativeFs.open)(__filename, "r")
-      const stat = await util.promisify(nativeFs.fstat)(fd)
+      const fd = await nativeUtil.promisify(nativeFs.open)(__filename, "r")
+      const stat = await nativeUtil.promisify(nativeFs.fstat)(fd)
       const buffer = Buffer.alloc(stat.size)
       let bytesRead = 0
       let chunkSize = 2048
@@ -358,9 +359,9 @@ describe("fs", () => {
         bytesRead += chunkSize
       }
 
-      const content = await util.promisify(nativeFs.readFile)(__filename, "utf8")
+      const content = await nativeUtil.promisify(nativeFs.readFile)(__filename, "utf8")
       assert.equal(buffer.toString(), content)
-      await util.promisify(nativeFs.close)(fd)
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to read nonexistent file", async () => {
@@ -370,7 +371,7 @@ describe("fs", () => {
 
   describe("readFile", () => {
     it("should read existing file", async () => {
-      const content = await util.promisify(nativeFs.readFile)(__filename, "utf8")
+      const content = await nativeUtil.promisify(nativeFs.readFile)(__filename, "utf8")
       assert.equal(await util.promisify(fs.readFile)(__filename, "utf8"), content)
     })
 
@@ -381,7 +382,7 @@ describe("fs", () => {
 
   describe("readdir", () => {
     it("should read existing directory", async () => {
-      const paths = await util.promisify(nativeFs.readdir)(helper.coderDir)
+      const paths = await nativeUtil.promisify(nativeFs.readdir)(helper.coderDir)
       assert.deepEqual(await util.promisify(fs.readdir)(helper.coderDir), paths)
     })
 
@@ -394,7 +395,7 @@ describe("fs", () => {
     it("should read existing link", async () => {
       const source = await helper.createTmpFile()
       const destination = helper.tmpFile()
-      await util.promisify(nativeFs.symlink)(source, destination)
+      await nativeUtil.promisify(nativeFs.symlink)(source, destination)
       assert.equal(await util.promisify(fs.readlink)(destination), source)
     })
 
@@ -421,8 +422,8 @@ describe("fs", () => {
       const source = await helper.createTmpFile()
       const destination = helper.tmpFile()
       assert.equal(await util.promisify(fs.rename)(source, destination), undefined)
-      assert.equal(await util.promisify(nativeFs.exists)(source), false)
-      assert.equal(await util.promisify(nativeFs.exists)(destination), true)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(source), false)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(destination), true)
     })
 
     it("should fail to rename nonexistent file", async () => {
@@ -433,9 +434,9 @@ describe("fs", () => {
   describe("rmdir", () => {
     it("should rmdir existing directory", async () => {
       const dir = helper.tmpFile()
-      await util.promisify(nativeFs.mkdir)(dir)
+      await nativeUtil.promisify(nativeFs.mkdir)(dir)
       assert.equal(await util.promisify(fs.rmdir)(dir), undefined)
-      assert.equal(await util.promisify(nativeFs.exists)(dir), false)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(dir), false)
     })
 
     it("should fail to rmdir nonexistent directory", async () => {
@@ -445,7 +446,7 @@ describe("fs", () => {
 
   describe("stat", () => {
     it("should stat existing file", async () => {
-      const nativeStat = await util.promisify(nativeFs.stat)(__filename)
+      const nativeStat = await nativeUtil.promisify(nativeFs.stat)(__filename)
       const stat = await util.promisify(fs.stat)(__filename)
       assert.equal(stat.size, nativeStat.size)
       assert.equal(typeof stat.mtime.getTime(), "number")
@@ -454,8 +455,8 @@ describe("fs", () => {
 
     it("should stat existing folder", async () => {
       const dir = helper.tmpFile()
-      await util.promisify(nativeFs.mkdir)(dir)
-      const nativeStat = await util.promisify(nativeFs.stat)(dir)
+      await nativeUtil.promisify(nativeFs.mkdir)(dir)
+      const nativeStat = await nativeUtil.promisify(nativeFs.stat)(dir)
       const stat = await util.promisify(fs.stat)(dir)
       assert.equal(stat.size, nativeStat.size)
       assert.equal(stat.isDirectory(), true)
@@ -475,7 +476,7 @@ describe("fs", () => {
       const source = await helper.createTmpFile()
       const destination = helper.tmpFile()
       assert.equal(await util.promisify(fs.symlink)(source, destination), undefined)
-      assert.equal(await util.promisify(nativeFs.exists)(source), true)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(source), true)
     })
 
     // TODO: Seems to be happy to do this on my system?
@@ -487,9 +488,9 @@ describe("fs", () => {
   describe("truncate", () => {
     it("should truncate existing file", async () => {
       const file = helper.tmpFile()
-      await util.promisify(nativeFs.writeFile)(file, "hiiiiii")
+      await nativeUtil.promisify(nativeFs.writeFile)(file, "hiiiiii")
       assert.equal(await util.promisify(fs.truncate)(file, 2), undefined)
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), "hi")
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), "hi")
     })
 
     it("should fail to truncate nonexistent file", async () => {
@@ -501,7 +502,7 @@ describe("fs", () => {
     it("should unlink existing file", async () => {
       const file = await helper.createTmpFile()
       assert.equal(await util.promisify(fs.unlink)(file), undefined)
-      assert.equal(await util.promisify(nativeFs.exists)(file), false)
+      assert.equal(await nativeUtil.promisify(nativeFs.exists)(file), false)
     })
 
     it("should fail to unlink nonexistent file", async () => {
@@ -523,10 +524,10 @@ describe("fs", () => {
   describe("write", () => {
     it("should write to existing file", async () => {
       const file = await helper.createTmpFile()
-      const fd = await util.promisify(nativeFs.open)(file, "w")
+      const fd = await nativeUtil.promisify(nativeFs.open)(file, "w")
       assert.equal(await util.promisify(fs.write)(fd, Buffer.from("hi")), 2)
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), "hi")
-      await util.promisify(nativeFs.close)(fd)
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), "hi")
+      await nativeUtil.promisify(nativeFs.close)(fd)
     })
 
     it("should fail to write to nonexistent file", async () => {
@@ -538,7 +539,7 @@ describe("fs", () => {
     it("should write file", async () => {
       const file = await helper.createTmpFile()
       assert.equal(await util.promisify(fs.writeFile)(file, "howdy"), undefined)
-      assert.equal(await util.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
+      assert.equal(await nativeUtil.promisify(nativeFs.readFile)(file, "utf8"), "howdy")
     })
   })
 

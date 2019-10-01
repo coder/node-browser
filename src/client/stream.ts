@@ -1,5 +1,5 @@
 import * as stream from "stream"
-import { callbackify } from "util"
+import { callbackify } from "../../lib/util"
 import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { isPromise } from "../common/util"
 import { DuplexProxy, ReadableProxy, WritableProxy } from "../server/stream"

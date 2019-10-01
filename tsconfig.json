@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "amd",
+    "module": "umd",
     "moduleResolution": "node",
     "strict": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
-    "sourceMap": true,
     "outDir": "out",
     "declaration": true
   },
   "include": [
-    "./src"
+    "./src",
+    "./lib"
   ]
 }

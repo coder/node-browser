@@ -3,13 +3,13 @@ import * as assert from "assert"
 import { ChildProcess } from "child_process"
 import * as path from "path"
 import { Readable } from "stream"
-import * as util from "util"
 import { Module } from "../src/common/proxy"
 import { createClient, testFn } from "./helpers"
 
 describe("child_process", () => {
   const client = createClient()
   const cp = (client.modules[Module.ChildProcess] as any) as typeof import("child_process") // eslint-disable-line @typescript-eslint/no-explicit-any
+  const util = client.modules[Module.Util]
 
   const getStdout = async (proc: ChildProcess): Promise<string> => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

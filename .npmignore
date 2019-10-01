@@ -1,4 +1,11 @@
-test
-node_modules
+.git
+.github
 .gitignore
+.npmignore
+*.yaml
+lib
+node_modules
+src
+test
+tsconfig.json
 yarn.lock

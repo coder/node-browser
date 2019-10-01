@@ -1,6 +1,6 @@
 import { PathLike } from "fs"
 import { ExecException, ExecOptions } from "child_process"
-import { promisify } from "util"
+import * as util from "../../lib/util"
 import { logger, field } from "@coder/logger"
 import { ReadWriteConnection } from "../common/connection"
 import { Emitter } from "../common/events"
@@ -44,6 +44,7 @@ export class Client {
     [Module.ChildProcess]: ChildProcessModule
     [Module.Fs]: FsModule
     [Module.Net]: NetModule
+    [Module.Util]: typeof util
   }
 
   /**
@@ -66,17 +67,18 @@ export class Client {
       [Module.ChildProcess]: new ChildProcessModule(this.getProxy(Module.ChildProcess).instance),
       [Module.Fs]: new FsModule(this.getProxy(Module.Fs).instance),
       [Module.Net]: new NetModule(this.getProxy(Module.Net).instance),
+      [Module.Util]: util,
     }
 
     // Methods that don't follow the standard callback pattern (an error
     // followed by a single result) need to provide a custom promisify function.
-    Object.defineProperty(this.modules[Module.Fs].exists, promisify.custom, {
+    Object.defineProperty(this.modules[Module.Fs].exists, util.promisify.custom, {
       value: (path: PathLike): Promise<boolean> => {
         return new Promise((resolve): void => this.modules[Module.Fs].exists(path, resolve))
       },
     })
 
-    Object.defineProperty(this.modules[Module.ChildProcess].exec, promisify.custom, {
+    Object.defineProperty(this.modules[Module.ChildProcess].exec, util.promisify.custom, {
       value: (
         command: string,
         options?: { encoding?: string | null } & ExecOptions | null

@@ -1,7 +1,7 @@
 import * as cp from "child_process"
 import * as net from "net"
 import * as stream from "stream"
-import { callbackify } from "util"
+import { callbackify } from "../../lib/util"
 import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { ChildProcessModuleProxy, ChildProcessProxy } from "../server/child_process"
 import { ClientWritableProxy, ClientReadableProxy, Readable, Writable } from "./stream"

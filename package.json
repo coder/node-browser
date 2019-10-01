@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha -r ts-node/register -r amd-loader ./test/*.test.ts",
     "lint": "eslint {src,test}/**/*.ts",
-    "prepare": "tsc"
+    "prepublishOnly": "rm -rf ./out && tsc"
   },
   "devDependencies": {
     "@types/mocha": "2.2.39",

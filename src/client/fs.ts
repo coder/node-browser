@@ -1,5 +1,5 @@
 import * as fs from "fs"
-import { callbackify } from "util"
+import { callbackify } from "../../lib/util"
 import { Batch, ClientProxy, ClientServerProxy, EncodingOptions, EncodingOptionsCallback } from "../common/proxy"
 import { FsModuleProxy, ReadStreamProxy, Stats as IStats, WatcherProxy, WriteStreamProxy } from "../server/fs"
 import { Readable, Writable } from "./stream"

@@ -12,6 +12,10 @@ import { NetModule } from "./net"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+export interface ClientOptions {
+  readonly logger?: Logger
+}
+
 interface ProxyData {
   promise: Promise<void>
   instance: any
@@ -46,13 +50,13 @@ export class Client {
     [Module.Util]: typeof util
   }
 
+  private readonly logger: Logger
+
   /**
    * @param connection Established connection to the server
    */
-  public constructor(
-    private readonly connection: ReadWriteConnection,
-    private readonly logger: Logger = new DefaultLogger("client")
-  ) {
+  public constructor(private readonly connection: ReadWriteConnection, private readonly options?: ClientOptions) {
+    this.logger = (this.options && this.options.logger) || new DefaultLogger("client")
     connection.onMessage(async (data) => {
       try {
         await this.handleMessage(JSON.parse(data))

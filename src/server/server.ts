@@ -31,7 +31,7 @@ export class Server {
   private readonly logger: Logger
 
   public constructor(private readonly connection: ReadWriteConnection, private readonly options?: ServerOptions) {
-    this.logger = (options && options.logger) || new DefaultLogger("server")
+    this.logger = (this.options && this.options.logger) || new DefaultLogger("server")
     connection.onMessage(async (data) => {
       try {
         await this.handleMessage(JSON.parse(data))

@@ -7,7 +7,7 @@ import { Client } from "../src/client/client"
 import { Emitter } from "../src/common/events"
 import { Disposable } from "../src/common/util"
 import { Server, ServerOptions } from "../src/server/server"
-import { ReadWriteConnection, Logger } from "../src/common/connection";
+import { ReadWriteConnection, Logger } from "../src/common/connection"
 
 // So we only make the directory once when running multiple tests.
 let mkdirPromise: Promise<void> | undefined
@@ -53,9 +53,9 @@ export class Helper {
 }
 
 interface TestConnection extends ReadWriteConnection {
-  close(): void;
-  down(): void;
-  up(): void;
+  close(): void
+  down(): void
+  up(): void
 }
 
 export class TestClient extends Client {
@@ -68,11 +68,11 @@ export class TestClient extends Client {
   }
 
   public down(): void {
-    this._connection.down();
+    this._connection.down()
   }
 
   public up(): void {
-    this._connection.up();
+    this._connection.up()
   }
 }
 

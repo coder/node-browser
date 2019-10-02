@@ -558,7 +558,7 @@ describe("fs", () => {
       const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
       assert.equal(await util.promisify(fs.access)(__filename), undefined)
       client.down()
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise((r): NodeJS.Timeout => setTimeout(r, 100))
       client.up()
       assert.equal(await util.promisify(fs.access)(__filename), undefined)
       client.dispose()

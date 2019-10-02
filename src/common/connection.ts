@@ -5,11 +5,22 @@ export interface SendableConnection {
 }
 
 export interface ReadWriteConnection extends SendableConnection {
+  /**
+   * Message received from the connection.
+   */
   onMessage(cb: (data: string) => void): void
+  /**
+   * Indicates permanent closure, meaning we should dispose.
+   */
   onClose(cb: () => void): void
+  /**
+   * Connection is temporarily down.
+   */
   onDown(cb: () => void): void
+  /**
+   * Connection is back up.
+   */
   onUp(cb: () => void): void
-  close(): void
 }
 
 export type LoggerArgument = (() => Array<{ [key: string]: any }>) | { [key: string]: any }
@@ -20,17 +31,25 @@ export interface Logger {
 }
 
 export class DefaultLogger implements Logger {
+  public constructor(private readonly name: string) {}
+
   public trace(message: string, ...args: LoggerArgument[]): void {
     if (typeof process !== "undefined" && process.env && process.env.LOG_LEVEL === "trace") {
-      this.log("trace", message, ...args)
+      this.log(message, ...args)
     }
   }
 
   public error(message: string, ...args: LoggerArgument[]): void {
-    this.log("error", message, ...args)
+    this.log(message, ...args)
   }
 
-  private log(level: "error" | "trace", message: string, ...args: LoggerArgument[]): void {
-    console.log(level, message, ...args.map((a) => (typeof a === "function" ? a() : a)))
+  private log(message: string, ...args: LoggerArgument[]): void {
+    console.log(`[${this.name}]`, message, ...args.map((a) => JSON.stringify(typeof a === "function" ? a() : a)))
   }
+}
+
+export enum ConnectionStatus {
+  Disconnected,
+  Connected,
+  Closed, // This status is permanent.
 }

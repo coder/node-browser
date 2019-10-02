@@ -7,6 +7,7 @@ import { Client } from "../src/client/client"
 import { Emitter } from "../src/common/events"
 import { Disposable } from "../src/common/util"
 import { Server, ServerOptions } from "../src/server/server"
+import { ReadWriteConnection, Logger } from "../src/common/connection";
 
 // So we only make the directory once when running multiple tests.
 let mkdirPromise: Promise<void> | undefined
@@ -51,16 +52,41 @@ export class Helper {
   }
 }
 
-export const createClient = (serverOptions?: ServerOptions): Client => {
+interface TestConnection extends ReadWriteConnection {
+  close(): void;
+  down(): void;
+  up(): void;
+}
+
+export class TestClient extends Client {
+  public constructor(private readonly _connection: TestConnection, logger?: Logger) {
+    super(_connection, logger)
+  }
+
+  public dispose(): void {
+    this._connection.close()
+  }
+
+  public down(): void {
+    this._connection.down();
+  }
+
+  public up(): void {
+    this._connection.up();
+  }
+}
+
+export const createClient = (serverOptions?: ServerOptions): TestClient => {
   const s2c = new Emitter<string>()
   const c2s = new Emitter<string>()
   const closeCallbacks = [] as Array<() => void>
+  const downCallbacks = [] as Array<() => void>
+  const upCallbacks = [] as Array<() => void>
 
   new Server(
     {
-      close: (): void => closeCallbacks.forEach((cb) => cb()),
-      onDown: (): void => undefined,
-      onUp: (): void => undefined,
+      onDown: (cb: () => void): number => downCallbacks.push(cb),
+      onUp: (cb: () => void): number => upCallbacks.push(cb),
       onClose: (cb: () => void): number => closeCallbacks.push(cb),
       onMessage: (cb): Disposable => c2s.event((d) => cb(d)),
       send: (data): NodeJS.Timer => setTimeout(() => s2c.emit(data), 0),
@@ -68,10 +94,12 @@ export const createClient = (serverOptions?: ServerOptions): Client => {
     serverOptions
   )
 
-  const client = new Client({
+  const client = new TestClient({
     close: (): void => closeCallbacks.forEach((cb) => cb()),
-    onDown: (): void => undefined,
-    onUp: (): void => undefined,
+    down: (): void => downCallbacks.forEach((cb) => cb()),
+    up: (): void => upCallbacks.forEach((cb) => cb()),
+    onDown: (cb: () => void): number => downCallbacks.push(cb),
+    onUp: (cb: () => void): number => upCallbacks.push(cb),
     onClose: (cb: () => void): number => closeCallbacks.push(cb),
     onMessage: (cb): Disposable => s2c.event((d) => cb(d)),
     send: (data): NodeJS.Timer => setTimeout(() => c2s.emit(data), 0),

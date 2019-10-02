@@ -551,4 +551,36 @@ describe("fs", () => {
       }, 100)
     })
   })
+
+  describe("reconnect", () => {
+    it("should reconnect", async () => {
+      const client = createClient()
+      const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
+      assert.equal(await util.promisify(fs.access)(__filename), undefined)
+      client.down()
+      await new Promise((r) => setTimeout(r, 100))
+      client.up()
+      assert.equal(await util.promisify(fs.access)(__filename), undefined)
+      client.dispose()
+    })
+
+    it("should fail while disconnected", async () => {
+      const client = createClient()
+      const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
+      assert.equal(await util.promisify(fs.access)(__filename), undefined)
+      client.down()
+      await assert.rejects(util.promisify(fs.access)(__filename), /Unable to call/)
+      client.dispose()
+    })
+
+    it("should close permanently", async () => {
+      const client = createClient()
+      const fs = (client.modules[Module.Fs] as any) as typeof import("fs") // eslint-disable-line @typescript-eslint/no-explicit-any
+      assert.equal(await util.promisify(fs.access)(__filename), undefined)
+      client.dispose()
+      await assert.rejects(util.promisify(fs.access)(__filename), /Unable to call/)
+      client.up()
+      await assert.rejects(util.promisify(fs.access)(__filename), /Unable to call/)
+    })
+  })
 })

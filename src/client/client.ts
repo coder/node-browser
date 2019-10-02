@@ -1,7 +1,7 @@
 import { PathLike } from "fs"
 import { ExecException, ExecOptions } from "child_process"
 import * as util from "../../lib/util"
-import { ReadWriteConnection, Logger, DefaultLogger } from "../common/connection"
+import { ReadWriteConnection, Logger, DefaultLogger, ConnectionStatus } from "../common/connection"
 import { Emitter } from "../common/events"
 import * as Message from "../common/messages"
 import { ClientServerProxy, Module, ServerProxy } from "../common/proxy"
@@ -30,7 +30,7 @@ export class Client {
   private readonly eventEmitter = new Emitter<{ event: string; args: any[] }>()
   private readonly initDataEmitter = new Emitter<Message.Server.InitData>()
 
-  private disconnected = false
+  private status = ConnectionStatus.Connected
 
   // The socket timeout is 60s, so we need to send a ping periodically to
   // prevent it from closing.
@@ -51,7 +51,7 @@ export class Client {
    */
   public constructor(
     private readonly connection: ReadWriteConnection,
-    private readonly logger: Logger = new DefaultLogger()
+    private readonly logger: Logger = new DefaultLogger("client")
   ) {
     connection.onMessage(async (data) => {
       try {
@@ -106,9 +106,9 @@ export class Client {
      * nor exit so we need to send a failure on all of them as well as trigger
      * events so things like child processes can clean up and possibly restart.
      */
-    const handleDisconnect = (): void => {
-      this.disconnected = true
-      this.logger.trace("disconnected from server", () => ({
+    const handleDisconnect = (permanent?: boolean): void => {
+      this.status = permanent ? ConnectionStatus.Closed : ConnectionStatus.Disconnected
+      this.logger.trace(`disconnected${permanent ? " permanently" : ""} from server`, () => ({
         proxies: this.proxies.size,
         callbacks: Array.from(this.proxies.values()).reduce((count, p) => count + p.callbacks.size, 0),
         success: this.successEmitter.counts,
@@ -131,39 +131,38 @@ export class Client {
     connection.onClose(() => {
       clearTimeout(this.pingTimeout as any)
       this.pingTimeout = undefined
-      handleDisconnect()
+      handleDisconnect(true)
       this.proxies.clear()
       this.successEmitter.dispose()
       this.failEmitter.dispose()
       this.eventEmitter.dispose()
       this.initDataEmitter.dispose()
     })
-    connection.onUp(() => (this.disconnected = false))
+    connection.onUp(() => {
+      if (this.status === ConnectionStatus.Disconnected) {
+        this.logger.trace("reconnected to server")
+        this.status = ConnectionStatus.Connected
+      }
+    })
 
     this.startPinging()
-  }
-
-  /**
-   * Close the connection.
-   */
-  public dispose(): void {
-    this.connection.close()
   }
 
   /**
    * Make a remote call for a proxy's method.
    */
   private remoteCall(proxyId: number | Module, method: string, args: any[]): Promise<any> {
-    if (typeof proxyId === "number" && (this.disconnected || !this.proxies.has(proxyId))) {
-      // Can assume killing or closing works because a disconnected proxy is
-      // disposed on the server's side, and a non-existent proxy has already
-      // been disposed.
+    // Assume killing and closing works because a disconnected proxy is disposed
+    // on the server and a non-existent proxy has already been disposed.
+    if (typeof proxyId === "number" && (this.status !== ConnectionStatus.Connected || !this.proxies.has(proxyId))) {
       switch (method) {
         case "close":
         case "kill":
           return Promise.resolve()
       }
+    }
 
+    if (this.status !== ConnectionStatus.Connected) {
       return Promise.reject(new Error(`Unable to call "${method}" on proxy ${proxyId}: disconnected`))
     }
 
@@ -374,7 +373,7 @@ export class Client {
       const log = (): void => {
         this.logger.trace(typeof proxyId === "number" ? "disposed proxy" : "disposed proxy callbacks", () => ({
           proxyId,
-          disconnected: this.disconnected,
+          status: this.status,
           callbacks: Array.from(this.proxies.values()).reduce((count, proxy) => count + proxy.callbacks.size, 0),
           success: this.successEmitter.counts,
           fail: this.failEmitter.counts,
@@ -390,7 +389,7 @@ export class Client {
           this.eventEmitter.dispose(proxyId)
           log()
         }
-        if (!this.disconnected) {
+        if (this.status === ConnectionStatus.Connected) {
           instance
             .dispose()
             .then(dispose)
@@ -437,7 +436,7 @@ export class Client {
   }
 
   private send(message: Message.Client.Message): void {
-    if (!this.disconnected) {
+    if (this.status === ConnectionStatus.Connected) {
       this.connection.send(JSON.stringify(message))
     }
   }

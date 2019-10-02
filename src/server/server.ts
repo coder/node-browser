@@ -1,5 +1,5 @@
 import * as os from "os"
-import { ReadWriteConnection, Logger, DefaultLogger } from "../common/connection"
+import { ReadWriteConnection, Logger, DefaultLogger, ConnectionStatus } from "../common/connection"
 import * as Message from "../common/messages"
 import { Module, ServerProxy } from "../common/proxy"
 import { isPromise, isProxy } from "../common/util"
@@ -26,12 +26,12 @@ interface ProxyData {
 export class Server {
   private proxyId = 0
   private readonly proxies = new Map<number | Module, ProxyData>()
-  private disconnected = false
+  private status = ConnectionStatus.Connected
   private readonly responseTimeout = 10000
   private readonly logger: Logger
 
   public constructor(private readonly connection: ReadWriteConnection, private readonly options?: ServerOptions) {
-    this.logger = (options && options.logger) || new DefaultLogger()
+    this.logger = (options && options.logger) || new DefaultLogger("server")
     connection.onMessage(async (data) => {
       try {
         await this.handleMessage(JSON.parse(data))
@@ -40,17 +40,29 @@ export class Server {
       }
     })
 
-    connection.onClose(() => {
-      this.disconnected = true
-      this.logger.trace("disconnected from client", { proxies: this.proxies.size })
+    const handleDisconnect = (permanent?: boolean): void => {
+      this.status = permanent ? ConnectionStatus.Closed : ConnectionStatus.Disconnected
+      this.logger.trace(`disconnected${permanent ? " permanently" : ""} from client`, { proxies: this.proxies.size })
       this.proxies.forEach((proxy, proxyId) => {
         if (isProxy(proxy.instance)) {
           proxy.instance.dispose().catch((error) => {
             this.logger.error(error.message)
           })
         }
-        this.removeProxy(proxyId)
+        // Top-level proxies can continue to be used.
+        if (permanent || typeof proxyId === "number") {
+          this.removeProxy(proxyId)
+        }
       })
+    }
+
+    connection.onDown(() => handleDisconnect())
+    connection.onClose(() => handleDisconnect(true))
+    connection.onUp(() => {
+      if (this.status === ConnectionStatus.Disconnected) {
+        this.logger.trace("reconnected to client")
+        this.status = ConnectionStatus.Connected
+      }
     })
 
     this.storeProxy(new ChildProcessModuleProxy(this.options ? this.options.fork : undefined), Module.ChildProcess)
@@ -152,7 +164,7 @@ export class Server {
    */
   private storeProxy(instance: ServerProxy | any, moduleProxyId?: Module): number | Module {
     // In case we disposed while waiting for a function to return.
-    if (this.disconnected) {
+    if (this.status !== ConnectionStatus.Connected) {
       if (isProxy(instance)) {
         instance.dispose().catch((error) => {
           this.logger.error(error.message)
@@ -171,7 +183,7 @@ export class Server {
       instance.onEvent((event, ...args) => this.sendEvent(proxyId, event, ...args))
       instance.onDone(() => {
         // It might have finished because we disposed it due to a disconnect.
-        if (!this.disconnected) {
+        if (this.status === ConnectionStatus.Connected) {
           this.sendEvent(proxyId, "done")
           this.getProxy(proxyId).disposeTimeout = setTimeout(() => {
             instance.dispose().catch((error) => {
@@ -238,7 +250,7 @@ export class Server {
   }
 
   /**
-   * Same as argumentToProto but provides storeProxy.
+   * Same as encode but provides storeProxy.
    */
   private encode(value: any): Argument {
     return encode(value, undefined, (p) => this.storeProxy(p))
@@ -256,7 +268,7 @@ export class Server {
   }
 
   private send(message: Message.Server.Message): void {
-    if (!this.disconnected) {
+    if (this.status === ConnectionStatus.Connected) {
       this.connection.send(JSON.stringify(message))
     }
   }

@@ -90,7 +90,7 @@ export class Server {
         } as Message.Server.Pong)
         break
       default:
-        throw new Error("unknown message type")
+        throw new Error(`unknown message type ${(message as any).type}`)
     }
   }
 

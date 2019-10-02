@@ -242,7 +242,7 @@ export class Client {
       case Message.Server.Type.Success:
         return this.emitSuccess(message)
       default:
-        throw new Error("unknown message type")
+        throw new Error(`unknown message type ${(message as any).type}`)
     }
   }
 

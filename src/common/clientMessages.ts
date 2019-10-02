@@ -2,8 +2,8 @@ import { Argument } from "./arguments"
 import { Module } from "./proxy"
 
 export enum Type {
-  Proxy,
-  Ping,
+  Proxy = "proxy",
+  Ping = "ping",
 }
 
 export interface Proxy {

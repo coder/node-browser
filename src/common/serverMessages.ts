@@ -2,12 +2,12 @@ import { Argument } from "./arguments"
 import { Module } from "./proxy"
 
 export enum Type {
-  Callback,
-  Event,
-  Fail,
-  Init,
-  Pong,
-  Success,
+  Callback = "callback",
+  Event = "event",
+  Fail = "fail",
+  Init = "init",
+  Pong = "pong",
+  Success = "success",
 }
 
 export interface Callback {

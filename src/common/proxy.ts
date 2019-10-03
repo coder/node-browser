@@ -251,6 +251,7 @@ export enum Module {
   ChildProcess = "child_process",
   Net = "net",
   Util = "util",
+  Stream = "stream",
 }
 
 interface BatchItem<T, A> {

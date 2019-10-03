@@ -147,14 +147,14 @@ export class Server extends ClientProxy<ClientNetServerProxy> implements net.Ser
         const socket = new Socket(socketProxy)
         const socketId = this.socketId++
         this.sockets.set(socketId, socket)
-        socket.on("error", () => this.sockets.delete(socketId))
+        socket.onInternalError(() => this.sockets.delete(socketId))
         socket.on("close", () => this.sockets.delete(socketId))
         this.emit("connection", socket)
       })
     )
 
     this.on("listening", () => (this._listening = true))
-    this.on("error", () => (this._listening = false))
+    this.onInternalError(() => (this._listening = false))
     this.on("close", () => (this._listening = false))
   }
 

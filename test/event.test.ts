@@ -159,4 +159,8 @@ describe("EventEmitter", () => {
     assert.equal(fn.called, 1)
     assert.deepEqual(fn.args, [10])
   })
+
+  it("should throw if nothing listens to errors", () => {
+    assert.throws(() => emitter.emit("error", new Error("nothing listening")), /nothing listening/)
+  })
 })

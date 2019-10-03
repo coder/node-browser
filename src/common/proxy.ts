@@ -1,5 +1,5 @@
 import { EventEmitter as NodeEventEmitter } from "events"
-import { EventEmitter } from "./events"
+import { EventEmitter, internalErrorEvent } from "./events"
 import { isPromise } from "./util"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -66,6 +66,14 @@ export abstract class ClientProxy<T extends ClientServerProxy> extends EventEmit
         this.handleDisconnect()
       })
     }
+  }
+
+  /**
+   * Bind to the error event without counting as a listener for the purpose of
+   * throwing if nothing is listening.
+   */
+  public onInternalError(listener: (...args: any[]) => void): void {
+    super.on(internalErrorEvent, listener)
   }
 
   /**

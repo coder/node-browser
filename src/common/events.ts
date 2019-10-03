@@ -3,6 +3,10 @@ import { Disposable } from "./util"
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+// This is so we can internally listen to errors for cleaning up without
+// removing the ability to throw if nothing external is listening.
+export const internalErrorEvent = Symbol("error")
+
 export interface Event<T> {
   (listener: (value: T) => void): Disposable
   (id: number | string, listener: (value: T) => void): Disposable
@@ -185,10 +189,15 @@ export class EventEmitter implements NodeEventEmitter {
   }
 
   public emit(event: string | symbol, ...args: EventArg[]): boolean {
+    if (event === "error") {
+      this.emit(internalErrorEvent, ...args)
+    }
     const listeners = this._listeners.get(event)
     if (listeners) {
       listeners.forEach((listener) => listener(...args))
       return true
+    } else if (event === "error") {
+      throw args[0] || new Error("unhandled error")
     }
     return false
   }

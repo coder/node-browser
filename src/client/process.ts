@@ -6,4 +6,8 @@ export class ProcessModule extends NotImplementedProxy implements Partial<NodePr
   public constructor() {
     super("process")
   }
+
+  public get env(): NodeJS.ProcessEnv {
+    return {}
+  }
 }

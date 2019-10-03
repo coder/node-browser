@@ -340,7 +340,7 @@ export abstract class Batch<T, A> {
 export class NotImplementedProxy {
   public constructor(name: string) {
     return new Proxy(
-      {},
+      this,
       {
         get(target: any, prop: string | number): any {
           if (target[prop]) {

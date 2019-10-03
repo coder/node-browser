@@ -252,6 +252,8 @@ export enum Module {
   Net = "net",
   Util = "util",
   Stream = "stream",
+  Os = "os",
+  Process = "process",
 }
 
 interface BatchItem<T, A> {
@@ -332,5 +334,21 @@ export abstract class Batch<T, A> {
         })
       })
       .catch((error) => batch.forEach((item) => item.reject(error)))
+  }
+}
+
+export class NotImplementedProxy {
+  public constructor(name: string) {
+    return new Proxy(
+      {},
+      {
+        get(target: any, prop: string | number): any {
+          if (target[prop]) {
+            return target[prop]
+          }
+          throw new Error(`not implemented: ${name}->${String(prop)}`)
+        },
+      }
+    )
   }
 }

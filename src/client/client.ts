@@ -9,7 +9,9 @@ import { ClientServerProxy, Module, ServerProxy } from "../common/proxy"
 import { ChildProcessModule } from "./child_process"
 import { FsModule } from "./fs"
 import { NetModule } from "./net"
-import { Writable, Readable } from "./stream"
+import { OsModule } from "./os"
+import { ProcessModule } from "./process"
+import { StreamModule } from "./stream"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -50,7 +52,9 @@ export class Client {
     [Module.Fs]: FsModule
     [Module.Net]: NetModule
     [Module.Util]: typeof util
-    [Module.Stream]: { Writable: typeof Writable, Readable: typeof Readable }
+    [Module.Stream]: StreamModule
+    [Module.Os]: OsModule
+    [Module.Process]: ProcessModule
   }
 
   private readonly logger: Logger
@@ -77,7 +81,9 @@ export class Client {
       [Module.Fs]: new FsModule(this.getProxy(Module.Fs).instance),
       [Module.Net]: new NetModule(this.getProxy(Module.Net).instance),
       [Module.Util]: util,
-      [Module.Stream]: { Writable, Readable },
+      [Module.Stream]: new StreamModule(),
+      [Module.Os]: new OsModule(),
+      [Module.Process]: new ProcessModule(),
     }
 
     // Methods that don't follow the standard callback pattern (an error

@@ -274,3 +274,8 @@ export class Duplex<T extends ClientDuplexProxy = ClientDuplexProxy> extends Wri
     this.emit("end")
   }
 }
+
+export class StreamModule {
+  public readonly Writable = Writable
+  public readonly Readable = Readable
+}

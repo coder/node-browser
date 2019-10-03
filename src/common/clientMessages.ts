@@ -4,10 +4,12 @@ import { Module } from "./proxy"
 export enum Type {
   Proxy = "proxy",
   Ping = "ping",
+  Handshake = "handshake",
 }
 
 export interface Proxy {
   type: Type.Proxy
+  clientId: number
   messageId: number
   proxyId: Module | number
   method: string
@@ -16,6 +18,12 @@ export interface Proxy {
 
 export interface Ping {
   type: Type.Ping
+  clientId: number
 }
 
-export type Message = Proxy | Ping
+export interface Handshake {
+  type: Type.Handshake
+  clientId: number
+}
+
+export type Message = Proxy | Ping | Handshake

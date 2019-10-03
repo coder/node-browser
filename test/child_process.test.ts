@@ -104,4 +104,44 @@ describe("child_process", () => {
       assert.equal(fn.args[0].message, "disconnected")
     })
   })
+
+  describe("resiliency", () => {
+    it("should handle multiple clients", async () => {
+      const clients = createClient(3)
+      const procs = clients.map((client, i) => {
+        return client.modules[Module.ChildProcess].spawn("/bin/bash", ["-c", `echo -n hello: ${i}`])
+      })
+
+      const done = Promise.all(procs.map((p) => new Promise((r): ChildProcess => p.on("exit", r))))
+      const stdout = await Promise.all(procs.map(getStdout))
+
+      for (let i = 0; i < stdout.length; ++i) {
+        assert.equal(stdout[i], `hello: ${i}`)
+      }
+
+      await done
+      clients.forEach((c) => c.dispose())
+    })
+
+    it("should exit if connection drops while in use", async () => {
+      const client = createClient()
+      const proc = client.modules[Module.ChildProcess].spawn("/bin/bash", ["-c", "sleep inf"])
+      setTimeout(() => {
+        client.down()
+      }, 200)
+      await new Promise((r): ChildProcess => proc.on("exit", r))
+      client.dispose()
+    })
+
+    it("should exit if connection drops briefly", async () => {
+      const client = createClient()
+      const proc = client.modules[Module.ChildProcess].spawn("/bin/bash", ["-c", "sleep inf"])
+      setTimeout(() => {
+        client.down()
+        client.up()
+      }, 200)
+      await new Promise((r): ChildProcess => proc.on("exit", r))
+      client.dispose()
+    })
+  })
 })

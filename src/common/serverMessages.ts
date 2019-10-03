@@ -12,6 +12,7 @@ export enum Type {
 
 export interface Callback {
   type: Type.Callback
+  clientId: number
   callbackId: number
   proxyId: Module | number
   args: Argument[]
@@ -19,6 +20,7 @@ export interface Callback {
 
 export interface Event {
   type: Type.Event
+  clientId: number
   event: string
   proxyId: Module | number
   args: Argument[]
@@ -26,6 +28,7 @@ export interface Event {
 
 export interface Fail {
   type: Type.Fail
+  clientId: number
   messageId: number
   response: Argument
 }
@@ -36,14 +39,17 @@ export interface InitData {
 
 export interface Init extends InitData {
   type: Type.Init
+  clientId: number
 }
 
 export interface Pong {
   type: Type.Pong
+  clientId: number
 }
 
 export interface Success {
   type: Type.Success
+  clientId: number
   messageId: number
   response: Argument
 }

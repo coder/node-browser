@@ -183,9 +183,7 @@ export abstract class ServerProxy<T extends NodeEventEmitter = NodeEventEmitter>
    * would be no guarantee the implementation would remember to emit the event.
    */
   public onDone(cb: () => void): void {
-    this.options.doneEvents.forEach((event) => {
-      this.instance.on(event, cb)
-    })
+    this.options.doneEvents.forEach((event) => this.instance.on(event, cb))
   }
 
   /**

@@ -2,7 +2,7 @@ import { ClientServerProxy, ServerProxy } from "./proxy"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const isProxy = <P = ClientServerProxy | ServerProxy>(value: any): value is P => {
+export const isNonModuleProxy = <P = ClientServerProxy | ServerProxy>(value: any): value is P => {
   return value && typeof value === "object" && typeof value.onEvent === "function"
 }
 
@@ -23,5 +23,5 @@ export const withEnv = <T extends { env?: NodeJS.ProcessEnv }>(options?: T): T =
 }
 
 export interface Disposable {
-  dispose: () => void
+  dispose: () => void | Promise<void>
 }

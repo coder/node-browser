@@ -1,17 +1,17 @@
 import { ClientServerProxy, Module, ServerProxy } from "./proxy"
-import { isProxy } from "./util"
+import { isNonModuleProxy } from "./util"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 enum Type {
-  Array,
-  Buffer,
-  Date,
-  Error,
-  Function,
-  Object,
-  Proxy,
-  Undefined,
+  Array = "array",
+  Buffer = "buffer",
+  Date = "date",
+  Error = "error",
+  Function = "function",
+  Object = "object",
+  Proxy = "proxy",
+  Undefined = "undefined",
 }
 
 interface EncodedArray {
@@ -75,7 +75,7 @@ export const encode = <P = ClientServerProxy | ServerProxy>(
   storeProxy?: (proxy: P) => number | Module
 ): Argument => {
   const convert = (currentValue: any): Argument => {
-    if (isProxy<P>(currentValue)) {
+    if (isNonModuleProxy<P>(currentValue)) {
       if (!storeProxy) {
         throw new Error("no way to serialize proxy")
       }

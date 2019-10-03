@@ -1,11 +1,11 @@
-import { PathLike } from "fs"
 import { ExecException, ExecOptions } from "child_process"
+import { PathLike } from "fs"
 import * as util from "../../lib/util"
-import { ReadWriteConnection, Logger, DefaultLogger, ConnectionStatus } from "../common/connection"
+import { Argument, decode, encode } from "../common/arguments"
+import { ConnectionStatus, DefaultLogger, Logger, ReadWriteConnection } from "../common/connection"
 import { Emitter } from "../common/events"
 import * as Message from "../common/messages"
 import { ClientServerProxy, Module, ServerProxy } from "../common/proxy"
-import { Argument, encode, decode } from "../common/arguments"
 import { ChildProcessModule } from "./child_process"
 import { FsModule } from "./fs"
 import { NetModule } from "./net"
@@ -28,6 +28,7 @@ interface ProxyData {
 export class Client {
   private messageId = 0
   private callbackId = 0
+  private clientId = (Math.random() * 0x100000000) >>> 0
   private readonly proxies = new Map<number | Module, ProxyData>()
   private readonly successEmitter = new Emitter<Message.Server.Success>()
   private readonly failEmitter = new Emitter<Message.Server.Fail>()
@@ -61,7 +62,7 @@ export class Client {
       try {
         await this.handleMessage(JSON.parse(data))
       } catch (error) {
-        this.logger.error("Failed to handle server message", { error: error.message })
+        this.logger.error("failed to handle server message", { error: error.message })
       }
     })
 
@@ -123,6 +124,7 @@ export class Client {
       const error = new Error("disconnected")
       this.failEmitter.emit({
         type: Message.Server.Type.Fail,
+        clientId: this.clientId,
         messageId: -1,
         response: encode(error),
       })
@@ -185,6 +187,7 @@ export class Client {
     const messageId = this.messageId++
     const message: Message.Client.Proxy = {
       type: Message.Client.Type.Proxy,
+      clientId: this.clientId,
       messageId,
       proxyId,
       method,
@@ -193,7 +196,7 @@ export class Client {
 
     this.logger.trace("sending", { messageId, proxyId, method, args })
 
-    this.send(message)
+    this.send<Message.Client.Proxy>(message)
 
     // The server will send back a fail or success message when the method
     // has completed, so we listen for that based on the message's unique ID.
@@ -229,6 +232,12 @@ export class Client {
    * Handle all messages from the server.
    */
   private async handleMessage(message: Message.Server.Message): Promise<void> {
+    if (this.status !== ConnectionStatus.Connected || message.clientId !== this.clientId) {
+      if (this.status !== ConnectionStatus.Connected) {
+        this.logger.trace("discarding message", { message })
+      }
+      return
+    }
     switch (message.type) {
       case Message.Server.Type.Callback:
         return this.runCallback(message)
@@ -242,7 +251,7 @@ export class Client {
         // Nothing to do since pings are on a timer rather than waiting for the
         // next pong in case a message from either the client or server is
         // dropped which would break the ping cycle.
-        break
+        return this.logger.trace("received pong")
       case Message.Server.Type.Success:
         return this.emitSuccess(message)
       default:
@@ -254,7 +263,7 @@ export class Client {
    * Convert success message to a success event.
    */
   private emitSuccess(message: Message.Server.Success): void {
-    this.logger.trace("received resolve", { messageId: message.messageId, response: message.response })
+    this.logger.trace("received resolve", message)
     this.successEmitter.emit(message.messageId, message)
   }
 
@@ -262,7 +271,7 @@ export class Client {
    * Convert fail message to a fail event.
    */
   private emitFail(message: Message.Server.Fail): void {
-    this.logger.trace("received reject", { messageId: message.messageId, response: message.response })
+    this.logger.trace("received reject", message)
     this.failEmitter.emit(message.messageId, message)
   }
 
@@ -314,9 +323,10 @@ export class Client {
 
     const schedulePing = (): void => {
       this.pingTimeout = setTimeout(() => {
-        this.send({
+        this.send<Message.Client.Ping>({
           type: Message.Client.Type.Ping,
-        } as Message.Client.Ping)
+          clientId: this.clientId,
+        })
         schedulePing()
       }, this.pingTimeoutDelay)
     }
@@ -377,6 +387,7 @@ export class Client {
       const log = (): void => {
         this.logger.trace(typeof proxyId === "number" ? "disposed proxy" : "disposed proxy callbacks", () => ({
           proxyId,
+          proxies: this.proxies.size,
           status: this.status,
           callbacks: Array.from(this.proxies.values()).reduce((count, proxy) => count + proxy.callbacks.size, 0),
           success: this.successEmitter.counts,
@@ -439,7 +450,7 @@ export class Client {
     return proxy
   }
 
-  private send(message: Message.Client.Message): void {
+  private send<T extends Message.Client.Message>(message: T): void {
     if (this.status === ConnectionStatus.Connected) {
       this.connection.send(JSON.stringify(message))
     }

@@ -60,7 +60,7 @@ interface TestConnection extends ReadWriteConnection {
 
 export class TestClient extends Client {
   public constructor(private readonly _connection: TestConnection, logger?: Logger) {
-    super(_connection, logger)
+    super(_connection, { logger })
   }
 
   public dispose(): void {
@@ -76,7 +76,9 @@ export class TestClient extends Client {
   }
 }
 
-export const createClient = (serverOptions?: ServerOptions): TestClient => {
+export function createClient(count?: 1, serverOptions?: ServerOptions): TestClient
+export function createClient(count: number, serverOptions?: ServerOptions): TestClient[]
+export function createClient(count = 1, serverOptions?: ServerOptions): TestClient | TestClient[] {
   const s2c = new Emitter<string>()
   const c2s = new Emitter<string>()
   const closeCallbacks = [] as Array<() => void>
@@ -94,18 +96,23 @@ export const createClient = (serverOptions?: ServerOptions): TestClient => {
     serverOptions
   )
 
-  const client = new TestClient({
-    close: (): void => closeCallbacks.forEach((cb) => cb()),
-    down: (): void => downCallbacks.forEach((cb) => cb()),
-    up: (): void => upCallbacks.forEach((cb) => cb()),
-    onDown: (cb: () => void): number => downCallbacks.push(cb),
-    onUp: (cb: () => void): number => upCallbacks.push(cb),
-    onClose: (cb: () => void): number => closeCallbacks.push(cb),
-    onMessage: (cb): Disposable => s2c.event((d) => cb(d)),
-    send: (data): NodeJS.Timer => setTimeout(() => c2s.emit(data), 0),
-  })
+  const clients = []
+  while (--count >= 0) {
+    clients.push(
+      new TestClient({
+        close: (): void => closeCallbacks.forEach((cb) => cb()),
+        down: (): void => downCallbacks.forEach((cb) => cb()),
+        up: (): void => upCallbacks.forEach((cb) => cb()),
+        onDown: (cb: () => void): number => downCallbacks.push(cb),
+        onUp: (cb: () => void): number => upCallbacks.push(cb),
+        onClose: (cb: () => void): number => closeCallbacks.push(cb),
+        onMessage: (cb): Disposable => s2c.event((d) => cb(d)),
+        send: (data): NodeJS.Timer => setTimeout(() => c2s.emit(data), 0),
+      })
+    )
+  }
 
-  return client
+  return clients.length === 1 ? clients[0] : clients
 }
 
 type Argument = any // eslint-disable-line @typescript-eslint/no-explicit-any

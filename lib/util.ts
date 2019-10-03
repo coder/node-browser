@@ -21,6 +21,24 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+function inherits(ctor: any, superCtor: any) {
+  if (ctor === undefined || ctor === null) {
+    throw new Error("ctor");
+  }
+  if (superCtor === undefined || superCtor === null) {
+    throw new Error("superCtor");
+  }
+  if (superCtor.prototype === undefined) {
+    throw new Error("superCtor.prototype");
+  }
+  Object.defineProperty(ctor, "super_", {
+    value: superCtor,
+    writable: true,
+    configurable: true
+  });
+  Object.setPrototypeOf(ctor.prototype, superCtor.prototype);
+}
+
 const kCustomPromisifiedSymbol = Symbol("util.promisify.custom")
 
 function _promisify(original: any) {
@@ -133,4 +151,4 @@ _promisify.custom = kCustomPromisifiedSymbol
 
 const promisify: typeof import("util").promisify = _promisify as any
 const callbackify: typeof import("util").callbackify = _callbackify as any
-export { promisify, callbackify }
+export { inherits, promisify, callbackify }

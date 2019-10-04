@@ -10,4 +10,20 @@ export class ProcessModule extends NotImplementedProxy implements Partial<NodePr
   public get env(): NodeJS.ProcessEnv {
     return {}
   }
+
+  public get argv(): string[] {
+    return []
+  }
+
+  public get stdout(): undefined {
+    return undefined
+  }
+
+  public get stderr(): undefined {
+    return undefined
+  }
+
+  public get platform(): undefined {
+    return undefined
+  }
 }

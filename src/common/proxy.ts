@@ -339,16 +339,13 @@ export abstract class Batch<T, A> {
 
 export class NotImplementedProxy {
   public constructor(name: string) {
-    return new Proxy(
-      this,
-      {
-        get(target: any, prop: string | number): any {
-          if (target[prop]) {
-            return target[prop]
-          }
-          throw new Error(`not implemented: ${name}->${String(prop)}`)
-        },
-      }
-    )
+    return new Proxy(this, {
+      get(target: any, prop: string | number): any {
+        if (prop in target) {
+          return target[prop]
+        }
+        throw new Error(`not implemented: ${name}->${String(prop)}`)
+      },
+    })
   }
 }

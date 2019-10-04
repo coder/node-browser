@@ -1,6 +1,11 @@
+import * as buffer from "buffer"
 import { ExecException, ExecOptions } from "child_process"
+import * as events from "events"
 import { PathLike } from "fs"
-import * as util from "../../lib/util"
+import * as stream from "stream"
+import * as tty from "tty"
+import * as path from "path"
+import * as util from "util"
 import { Argument, decode, encode } from "../common/arguments"
 import { ConnectionStatus, DefaultLogger, Logger, ReadWriteConnection } from "../common/connection"
 import { Emitter } from "../common/events"
@@ -10,8 +15,6 @@ import { ChildProcessModule } from "./child_process"
 import { FsModule } from "./fs"
 import { NetModule } from "./net"
 import { OsModule } from "./os"
-import { ProcessModule } from "./process"
-import { StreamModule } from "./stream"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -52,9 +55,13 @@ export class Client {
     [Module.Fs]: FsModule
     [Module.Net]: NetModule
     [Module.Util]: typeof util
-    [Module.Stream]: StreamModule
+    [Module.Stream]: typeof stream
     [Module.Os]: OsModule
-    [Module.Process]: ProcessModule
+    [Module.Process]: typeof process
+    [Module.Events]: typeof events
+    [Module.Buffer]: typeof buffer
+    [Module.Tty]: typeof tty
+    [Module.Path]: typeof path
   }
 
   private readonly logger: Logger
@@ -81,9 +88,17 @@ export class Client {
       [Module.Fs]: new FsModule(this.getProxy(Module.Fs).instance),
       [Module.Net]: new NetModule(this.getProxy(Module.Net).instance),
       [Module.Util]: util,
-      [Module.Stream]: new StreamModule(),
+      [Module.Stream]: stream,
       [Module.Os]: new OsModule(),
-      [Module.Process]: new ProcessModule(),
+      [Module.Process]: process,
+      [Module.Events]: events,
+      [Module.Buffer]: buffer,
+      [Module.Tty]: tty,
+      [Module.Path]: path,
+    }
+
+    if (typeof util.promisify === "undefined") {
+      ;(util as any).promisify = require("util.promisify")
     }
 
     // Methods that don't follow the standard callback pattern (an error

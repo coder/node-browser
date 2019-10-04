@@ -1,8 +1,11 @@
-import { EventEmitter as NodeEventEmitter } from "events"
-import { EventEmitter, internalErrorEvent } from "./events"
+import { EventEmitter } from "events"
 import { isPromise } from "./util"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// This is so we can internally listen to errors for cleaning up without
+// removing the ability to throw if nothing external is listening.
+const internalErrorEvent = Symbol("error")
 
 export type EventCallback = (event: string, ...args: any[]) => void
 export type EncodingOptions =
@@ -93,6 +96,16 @@ export abstract class ClientProxy<T extends ClientServerProxy> extends EventEmit
   }
 
   /**
+   * Same as the parent except also emit the internal error event for errors.
+   */
+  public emit(event: string | symbol, ...args: any[]): boolean {
+    if (event === "error") {
+      super.emit(internalErrorEvent, ...args)
+    }
+    return super.emit(event, ...args)
+  }
+
+  /**
    * Original promise for the server proxy. Can be used to be passed as an
    * argument.
    */
@@ -170,7 +183,7 @@ export interface ServerProxyOptions<T> {
  * Events listeners are added client-side (since all events automatically
  * forward to the client), so onDone and onEvent do not need to be asynchronous.
  */
-export abstract class ServerProxy<T extends NodeEventEmitter = NodeEventEmitter> {
+export abstract class ServerProxy<T extends EventEmitter = EventEmitter> {
   public readonly instance: T
 
   private readonly callbacks: EventCallback[] = []
@@ -239,7 +252,7 @@ export abstract class ServerProxy<T extends NodeEventEmitter = NodeEventEmitter>
  * client-side version of the server proxy. The event listeners are handled by
  * the client and the remaining methods are proxied to the server.
  */
-export interface ClientServerProxy<T extends NodeEventEmitter = NodeEventEmitter> extends ServerProxy<T> {
+export interface ClientServerProxy<T extends EventEmitter = EventEmitter> extends ServerProxy<T> {
   proxyId: number | Module
 }
 
@@ -254,6 +267,10 @@ export enum Module {
   Stream = "stream",
   Os = "os",
   Process = "process",
+  Events = "events",
+  Buffer = "buffer",
+  Tty = "tty",
+  Path = "path",
 }
 
 interface BatchItem<T, A> {

@@ -1,11 +1,6 @@
-import { EventEmitter as NodeEventEmitter } from "events"
 import { Disposable } from "./util"
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-// This is so we can internally listen to errors for cleaning up without
-// removing the ability to throw if nothing external is listening.
-export const internalErrorEvent = Symbol("error")
 
 export interface Event<T> {
   (listener: (value: T) => void): Disposable
@@ -102,110 +97,5 @@ export class Emitter<T> {
     })
 
     return counts
-  }
-}
-
-type EventArg = any // eslint-disable-line @typescript-eslint/no-explicit-any
-
-/**
- * A replacement for Node's event emitter.
- */
-export class EventEmitter implements NodeEventEmitter {
-  private readonly _listeners = new Map<string | symbol, Array<(...args: EventArg[]) => void>>()
-
-  // Insanity but it fulfills the types when creating a net.Server.
-  public static EventEmitter = EventEmitter
-
-  public static listenerCount(): number {
-    throw new Error("deprecated")
-  }
-  public static get defaultMaxListeners(): number {
-    throw new Error("deprecated")
-  }
-
-  public on(event: string | symbol, listener: (...args: EventArg[]) => void): this {
-    if (!this._listeners.has(event)) {
-      this._listeners.set(event, [])
-    }
-    this._listeners.get(event)!.push(listener)
-    return this
-  }
-
-  public addListener(event: string | symbol, listener: (...args: EventArg[]) => void): this {
-    return this.on(event, listener)
-  }
-
-  public once(event: string | symbol, listener: (...args: EventArg[]) => void): this {
-    const cb = (...args: EventArg[]): void => {
-      this.off(event, cb)
-      listener(...args)
-    }
-    this.on(event, cb)
-    return this
-  }
-
-  public prependListener(): this {
-    throw new Error("not implemented")
-  }
-  public prependOnceListener(): this {
-    throw new Error("not implemented")
-  }
-
-  public removeListener(event: string | symbol, listener: (...args: EventArg[]) => void): this {
-    return this.off(event, listener)
-  }
-
-  public off(event: string | symbol, listener: (...args: EventArg[]) => void): this {
-    const listeners = this._listeners.get(event)
-    if (listeners) {
-      const i = listeners.indexOf(listener)
-      if (i !== -1) {
-        listeners.splice(i, 1)
-      }
-    }
-    return this
-  }
-
-  public removeAllListeners(event?: string | symbol): this {
-    if (event) {
-      this._listeners.delete(event)
-    } else {
-      this._listeners.clear()
-    }
-    return this
-  }
-
-  public setMaxListeners(): this {
-    throw new Error("not implemented")
-  }
-  public getMaxListeners(): number {
-    throw new Error("not implemented")
-  }
-  public listeners(): Function[] {
-    throw new Error("not implemented")
-  }
-  public rawListeners(): Function[] {
-    throw new Error("not implemented")
-  }
-
-  public emit(event: string | symbol, ...args: EventArg[]): boolean {
-    if (event === "error") {
-      this.emit(internalErrorEvent, ...args)
-    }
-    const listeners = this._listeners.get(event)
-    if (listeners) {
-      listeners.forEach((listener) => listener(...args))
-      return true
-    } else if (event === "error") {
-      throw args[0] || new Error("unhandled error")
-    }
-    return false
-  }
-
-  public eventNames(): Array<string | symbol> {
-    throw new Error("not implemented")
-  }
-  public listenerCount(): number {
-    throw new Error("not implemented")
   }
 }

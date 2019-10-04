@@ -7,16 +7,19 @@
   "scripts": {
     "test": "mocha -r ts-node/register -r amd-loader ./test/*.test.ts",
     "lint": "eslint {src,test}/**/*.ts",
-    "prepublishOnly": "rm -rf ./out && tsc"
+    "prepublishOnly": "rm -rf ./out && yarn build:client && yarn build:server",
+    "build:client": "tsc --project ./tsconfig.client.json && browserify ./out/client/client.js -s node-browser -o ./out/client.js && rm ./out/client/*.js && mv ./out/client.js ./out/client/client.js && rm -r ./out/common",
+    "build:server": "tsc --project ./tsconfig.server.json"
   },
   "devDependencies": {
+    "@coder/logger": "^1.1.11",
     "@types/mocha": "2.2.39",
     "@types/node": "^10.12.12",
     "@types/rimraf": "^2.0.2",
     "@typescript-eslint/eslint-plugin": "^2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
-    "@coder/logger": "^1.1.11",
     "amd-loader": "^0.0.8",
+    "browserify": "^16.5.0",
     "eslint": "^6.2.0",
     "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-import": "^2.18.2",
@@ -26,6 +29,7 @@
     "prettier": "^1.18.2",
     "rimraf": "^3.0.0",
     "ts-node": "^8.3.0",
-    "typescript": "~3.5.0"
+    "typescript": "~3.5.0",
+    "util.promisify": "^1.0.0"
   }
 }

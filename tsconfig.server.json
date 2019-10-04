@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
+    "module": "umd",
     "moduleResolution": "node",
     "strict": true,
     "noImplicitReturns": true,
@@ -10,6 +10,7 @@
     "declaration": true
   },
   "include": [
-    "./src"
+    "./src/server",
+    "./src/common"
   ]
 }

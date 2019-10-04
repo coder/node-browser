@@ -1,5 +1,5 @@
 import * as stream from "stream"
-import { callbackify } from "../../lib/util"
+import { callbackify } from "util"
 import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { isPromise } from "../common/util"
 import { DuplexProxy, ReadableProxy, WritableProxy } from "../server/stream"
@@ -273,9 +273,4 @@ export class Duplex<T extends ClientDuplexProxy = ClientDuplexProxy> extends Wri
     super.handleDisconnect()
     this.emit("end")
   }
-}
-
-export class StreamModule {
-  public readonly Writable = Writable
-  public readonly Readable = Readable
 }

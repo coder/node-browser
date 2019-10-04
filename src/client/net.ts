@@ -1,5 +1,5 @@
 import * as net from "net"
-import { callbackify } from "../../lib/util"
+import { callbackify } from "util"
 import { ClientProxy, ClientServerProxy } from "../common/proxy"
 import { NetModuleProxy, NetServerProxy, NetSocketProxy } from "../server/net"
 import { Duplex } from "./stream"

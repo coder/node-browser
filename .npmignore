@@ -3,7 +3,6 @@
 .gitignore
 .npmignore
 *.yaml
-lib
 node_modules
 src
 test

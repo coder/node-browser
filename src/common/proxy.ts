@@ -260,17 +260,18 @@ export interface ClientServerProxy<T extends EventEmitter = EventEmitter> extend
  * Supported top-level module proxies.
  */
 export enum Module {
-  Fs = "fs",
-  ChildProcess = "child_process",
-  Net = "net",
-  Util = "util",
-  Stream = "stream",
-  Os = "os",
-  Process = "process",
-  Events = "events",
   Buffer = "buffer",
-  Tty = "tty",
+  ChildProcess = "child_process",
+  Crypto = "crypto",
+  Events = "events",
+  Fs = "fs",
+  Net = "net",
+  Os = "os",
   Path = "path",
+  Process = "process",
+  Stream = "stream",
+  Tty = "tty",
+  Util = "util",
 }
 
 interface BatchItem<T, A> {

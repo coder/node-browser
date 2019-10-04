@@ -1,5 +1,6 @@
 import * as buffer from "buffer"
 import { ExecException, ExecOptions } from "child_process"
+import * as crypto from "crypto"
 import * as events from "events"
 import { PathLike } from "fs"
 import * as stream from "stream"
@@ -51,17 +52,18 @@ export class Client {
   private readonly responseTimeout = 10000
 
   public readonly modules: {
+    [Module.Buffer]: typeof buffer
     [Module.ChildProcess]: ChildProcessModule
+    [Module.Crypto]: typeof crypto
+    [Module.Events]: typeof events
     [Module.Fs]: FsModule
     [Module.Net]: NetModule
-    [Module.Util]: typeof util
-    [Module.Stream]: typeof stream
     [Module.Os]: OsModule
-    [Module.Process]: typeof process
-    [Module.Events]: typeof events
-    [Module.Buffer]: typeof buffer
-    [Module.Tty]: typeof tty
     [Module.Path]: typeof path
+    [Module.Process]: typeof process
+    [Module.Stream]: typeof stream
+    [Module.Tty]: typeof tty
+    [Module.Util]: typeof util
   }
 
   private readonly logger: Logger
@@ -84,17 +86,18 @@ export class Client {
     this.createProxy(Module.Net)
 
     this.modules = {
+      [Module.Buffer]: buffer,
       [Module.ChildProcess]: new ChildProcessModule(this.getProxy(Module.ChildProcess).instance),
+      [Module.Crypto]: crypto,
+      [Module.Events]: events,
       [Module.Fs]: new FsModule(this.getProxy(Module.Fs).instance),
       [Module.Net]: new NetModule(this.getProxy(Module.Net).instance),
-      [Module.Util]: util,
-      [Module.Stream]: stream,
       [Module.Os]: new OsModule(),
-      [Module.Process]: process,
-      [Module.Events]: events,
-      [Module.Buffer]: buffer,
-      [Module.Tty]: tty,
       [Module.Path]: path,
+      [Module.Process]: process,
+      [Module.Stream]: stream,
+      [Module.Tty]: tty,
+      [Module.Util]: util,
     }
 
     if (typeof util.promisify === "undefined") {

@@ -179,6 +179,23 @@ export class Client {
   }
 
   /**
+   * Ask for an initialization message. This isn't necessary to start
+   * communicating but could be used that way.
+   */
+  public handshake(): Promise<Message.Server.InitData> {
+    return new Promise((resolve): void => {
+      const d = this.initDataEmitter.event((data) => {
+        d.dispose()
+        resolve(data)
+      })
+      this.send<Message.Client.Handshake>({
+        type: Message.Client.Type.Handshake,
+        clientId: this.clientId,
+      })
+    })
+  }
+
+  /**
    * Make a remote call for a proxy's method.
    */
   private remoteCall(proxyId: number | Module, method: string, args: any[]): Promise<any> {

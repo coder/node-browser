@@ -88,8 +88,9 @@ export class Server {
       case Message.Client.Type.Handshake:
         this.send<Message.Server.Init>({
           type: Message.Server.Type.Init,
-          os: os.platform(),
           clientId: message.clientId,
+          env: process.env,
+          os: os.platform(),
         })
         break
       case Message.Client.Type.Ping:

@@ -35,6 +35,7 @@ export interface Fail {
 
 export interface InitData {
   readonly os: NodeJS.Platform
+  readonly env: NodeJS.ProcessEnv
 }
 
 export interface Init extends InitData {

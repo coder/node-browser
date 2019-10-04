@@ -1,6 +1,7 @@
 import "leaked-handles"
 import * as assert from "assert"
 import { ChildProcess } from "child_process"
+import * as os from "os"
 import * as path from "path"
 import { Readable } from "stream"
 import { Module } from "../src/common/proxy"
@@ -15,6 +16,14 @@ describe("child_process", () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return new Promise<Buffer>((r): Readable => proc.stdout!.once("data", r)).then((s) => s.toString())
   }
+
+  describe("handshake", () => {
+    it("should get init data", async () => {
+      const data = await client.handshake()
+      assert.equal(data.os, os.platform())
+      assert.deepEqual(data.env, process.env)
+    })
+  })
 
   describe("exec", () => {
     it("should get exec stdout", async () => {

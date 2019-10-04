@@ -7,4 +7,8 @@ export class OsModule extends NotImplementedProxy implements Partial<NodeOs> {
   public constructor() {
     super("os")
   }
+
+  public homedir(): string {
+    return ""
+  }
 }

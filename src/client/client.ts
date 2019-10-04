@@ -4,6 +4,7 @@ import * as crypto from "crypto"
 import * as events from "events"
 import { PathLike } from "fs"
 import * as stream from "stream"
+import * as timers from "timers"
 import * as tty from "tty"
 import * as path from "path"
 import * as util from "util"
@@ -62,6 +63,7 @@ export class Client {
     [Module.Path]: typeof path
     [Module.Process]: typeof process
     [Module.Stream]: typeof stream
+    [Module.Timers]: typeof timers
     [Module.Tty]: typeof tty
     [Module.Util]: typeof util
   }
@@ -109,6 +111,7 @@ export class Client {
       [Module.Path]: path,
       [Module.Process]: process,
       [Module.Stream]: stream,
+      [Module.Timers]: timers,
       [Module.Tty]: tty,
       [Module.Util]: util,
     }

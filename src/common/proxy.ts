@@ -270,6 +270,7 @@ export enum Module {
   Path = "path",
   Process = "process",
   Stream = "stream",
+  Timers = "timers",
   Tty = "tty",
   Util = "util",
 }

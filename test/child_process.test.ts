@@ -20,7 +20,7 @@ describe("child_process", () => {
   describe("handshake", () => {
     it("should get init data", async () => {
       const data = await client.handshake()
-      assert.equal(data.os, os.platform())
+      assert.equal(data.os.platform, os.platform())
       assert.deepEqual(data.env, process.env)
     })
   })

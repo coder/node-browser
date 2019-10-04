@@ -68,6 +68,8 @@ export class Client {
 
   private readonly logger: Logger
 
+  private readonly _handshake: Promise<Message.Server.InitData>
+
   /**
    * @param connection Established connection to the server
    */
@@ -81,6 +83,17 @@ export class Client {
       }
     })
 
+    this._handshake = new Promise((resolve): void => {
+      const d = this.initDataEmitter.event((data) => {
+        d.dispose()
+        resolve(data)
+      })
+      this.send<Message.Client.Handshake>({
+        type: Message.Client.Type.Handshake,
+        clientId: this.clientId,
+      })
+    })
+
     this.createProxy(Module.ChildProcess)
     this.createProxy(Module.Fs)
     this.createProxy(Module.Net)
@@ -92,7 +105,7 @@ export class Client {
       [Module.Events]: events,
       [Module.Fs]: new FsModule(this.getProxy(Module.Fs).instance),
       [Module.Net]: new NetModule(this.getProxy(Module.Net).instance),
-      [Module.Os]: new OsModule(),
+      [Module.Os]: new OsModule(this._handshake),
       [Module.Path]: path,
       [Module.Process]: process,
       [Module.Stream]: stream,
@@ -182,20 +195,11 @@ export class Client {
   }
 
   /**
-   * Ask for an initialization message. This isn't necessary to start
-   * communicating but could be used that way.
+   * Get the handshake promise. This isn't necessary to start communicating but
+   * is generally a good idea since some fills get their data from it.
    */
   public handshake(): Promise<Message.Server.InitData> {
-    return new Promise((resolve): void => {
-      const d = this.initDataEmitter.event((data) => {
-        d.dispose()
-        resolve(data)
-      })
-      this.send<Message.Client.Handshake>({
-        type: Message.Client.Type.Handshake,
-        clientId: this.clientId,
-      })
-    })
+    return this._handshake
   }
 
   /**

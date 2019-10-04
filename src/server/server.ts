@@ -90,7 +90,11 @@ export class Server {
           type: Message.Server.Type.Init,
           clientId: message.clientId,
           env: process.env,
-          os: os.platform(),
+          os: {
+            platform: os.platform(),
+            homedir: os.homedir(),
+            eol: os.EOL,
+          },
         })
         break
       case Message.Client.Type.Ping:

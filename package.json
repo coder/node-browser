@@ -1,6 +1,6 @@
 {
   "name": "@coder/node-browser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "author": "Coder",
   "description": "Use Node APIs in the browser.",
@@ -29,6 +29,7 @@
     "prettier": "^1.18.2",
     "rimraf": "^3.0.0",
     "ts-node": "^8.3.0",
+    "tslib": "^1.10.0",
     "typescript": "~3.5.0",
     "util.promisify": "^1.0.0"
   }

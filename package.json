@@ -1,6 +1,6 @@
 {
   "name": "@coder/node-browser",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "license": "MIT",
   "author": "Coder",
   "description": "Use Node APIs in the browser.",
@@ -31,7 +31,9 @@
     "rimraf": "^3.0.0",
     "ts-node": "^8.3.0",
     "tslib": "^1.10.0",
-    "typescript": "~3.5.0",
-    "util.promisify": "^1.0.0"
+    "typescript": "~3.5.0"
+  },
+  "resolutions": {
+    "util": "^0.12.1"
   }
 }

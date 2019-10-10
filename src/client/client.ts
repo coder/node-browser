@@ -116,10 +116,6 @@ export class Client {
       [Module.Util]: util,
     }
 
-    if (typeof util.promisify === "undefined") {
-      ;(util as any).promisify = require("util.promisify")
-    }
-
     // Methods that don't follow the standard callback pattern (an error
     // followed by a single result) need to provide a custom promisify function.
     Object.defineProperty(this.modules[Module.Fs].exists, util.promisify.custom, {

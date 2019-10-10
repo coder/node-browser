@@ -1,13 +1,13 @@
 {
   "name": "@coder/node-browser",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "author": "Coder",
   "description": "Use Node APIs in the browser.",
   "scripts": {
     "test": "mocha -r ts-node/register -r amd-loader ./test/*.test.ts",
     "lint": "eslint {src,test}/**/*.ts",
-    "postinstall": "sed -i 's/var __/let __/g' ./node_modules/tslib/tslib.js",
+    "prepare": "sed -i 's/var __/let __/g' ./node_modules/tslib/tslib.js",
     "prepublishOnly": "rm -rf ./out && yarn build:client && yarn build:server",
     "build:client": "tsc --project ./tsconfig.client.json && browserify ./out/client/client.js -s node-browser -o ./out/client.js && rm ./out/client/*.js && mv ./out/client.js ./out/client/client.js && rm -r ./out/common",
     "build:server": "tsc --project ./tsconfig.server.json"

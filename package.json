@@ -1,6 +1,6 @@
 {
   "name": "@coder/node-browser",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "license": "MIT",
   "author": "Coder",
   "description": "Use Node APIs in the browser.",

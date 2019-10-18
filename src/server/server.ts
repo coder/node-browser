@@ -98,7 +98,7 @@ export class Server {
         })
         break
       case Message.Client.Type.Ping:
-        this.logger.trace("received ping")
+        this.logger.trace("received ping", { proxies: this.proxies.size })
         this.send<Message.Server.Pong>({
           type: Message.Server.Type.Pong,
           clientId: message.clientId,

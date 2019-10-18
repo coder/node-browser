@@ -8,6 +8,7 @@ import * as timers from "timers"
 import * as tty from "tty"
 import * as path from "path"
 import * as util from "util"
+import * as sd from "string_decoder"
 import { Argument, decode, encode } from "../common/arguments"
 import { ConnectionStatus, DefaultLogger, Logger, ReadWriteConnection } from "../common/connection"
 import { Emitter } from "../common/events"
@@ -63,6 +64,7 @@ export class Client {
     [Module.Path]: typeof path
     [Module.Process]: typeof process
     [Module.Stream]: typeof stream
+    [Module.StringDecoder]: typeof sd
     [Module.Timers]: typeof timers
     [Module.Tty]: typeof tty
     [Module.Util]: typeof util
@@ -111,6 +113,7 @@ export class Client {
       [Module.Path]: path,
       [Module.Process]: process,
       [Module.Stream]: stream,
+      [Module.StringDecoder]: sd,
       [Module.Timers]: timers,
       [Module.Tty]: tty,
       [Module.Util]: util,

@@ -12,6 +12,7 @@
   },
   "include": [
     "./src/client",
-    "./src/common"
+    "./src/common",
+    "./src/index.ts"
   ]
 }
